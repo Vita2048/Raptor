@@ -3,7 +3,7 @@ extends Node2D
 const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const EnemyShipScript := preload("res://scripts/EnemyShip.gd")
 const ProjectileScript := preload("res://scripts/Projectile.gd")
-const ExplosionScene := preload("res://scenes/Explosion.tscn")
+const ExplosionScene := preload("res://scenes/ExplosionEffect.tscn")
 
 var player: Node2D
 var enemy_pool: ObjectPool
@@ -65,7 +65,7 @@ func _on_enemy_destroyed(enemy: Area2D, score_value: int) -> void:
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
 	var explosion := ExplosionScene.instantiate()
 	explosion.global_position = pos
-	explosion.scale = Vector2.ONE * (1.65 if large else 0.82)
+	explosion.configure(large)
 	get_parent().add_child(explosion)
 	explosion.burst()
 
