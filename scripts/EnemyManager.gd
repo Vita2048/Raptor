@@ -58,16 +58,42 @@ func _on_enemy_request_fire(origin: Vector2, directions: Array, speed: float, da
 		var bullet := enemy_bullet_pool.acquire() as Area2D
 		bullet.launch(origin, direction, speed, damage, false)
 
-func _on_enemy_destroyed(enemy: Area2D, score_value: int) -> void:
+func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void:
 	GameState.add_score(score_value)
-	_spawn_explosion(enemy.global_position, enemy.is_boss)
+	_spawn_explosion(pos, was_boss)
 
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
+	if large:
+		_spawn_boss_explosion(pos)
+		return
+	_spawn_single_explosion(pos, false)
+
+func _spawn_single_explosion(pos: Vector2, large: bool = false) -> void:
 	var explosion := ExplosionScene.instantiate()
 	explosion.global_position = pos
 	explosion.configure(large)
 	get_parent().add_child(explosion)
 	explosion.burst()
+
+func _spawn_boss_explosion(pos: Vector2) -> void:
+	_spawn_single_explosion(pos, true)
+	var offsets := [
+		Vector2(-160, -190),
+		Vector2(170, -160),
+		Vector2(-250, 20),
+		Vector2(250, 35),
+		Vector2(-115, 205),
+		Vector2(130, 230),
+		Vector2(0, -310),
+		Vector2(0, 330)
+	]
+	for i in range(offsets.size()):
+		_spawn_delayed_boss_explosion(pos + offsets[i], 0.04 + i * 0.045)
+
+func _spawn_delayed_boss_explosion(pos: Vector2, delay: float) -> void:
+	await get_tree().create_timer(delay).timeout
+	if is_instance_valid(self):
+		_spawn_single_explosion(pos, true)
 
 func _on_game_over() -> void:
 	enemy_pool.release_all()

@@ -1,6 +1,6 @@
 extends Area2D
 
-signal destroyed(enemy: Area2D, score_value: int)
+signal destroyed(position: Vector2, score_value: int, was_boss: bool)
 signal request_fire(origin: Vector2, directions: Array, speed: float, damage: int)
 
 const VIEW_SIZE := Vector2(1920, 1080)
@@ -105,7 +105,10 @@ func _on_area_entered(area: Area2D) -> void:
 		if is_boss:
 			GameState.boss_health_changed.emit(max(health, 0), max_health)
 		if health <= 0:
-			destroyed.emit(self, score_value)
+			var death_position := global_position
+			var death_score := score_value
+			var death_was_boss := is_boss
+			destroyed.emit(death_position, death_score, death_was_boss)
 			return_to_pool()
 
 func return_to_pool() -> void:
