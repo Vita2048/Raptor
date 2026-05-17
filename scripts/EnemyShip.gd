@@ -112,7 +112,8 @@ func _physics_process(delta: float) -> void:
 func _fire_pattern() -> void:
 	if is_boss:
 		var directions: Array = []
-		for angle in [-72.0, -54.0, -36.0, -18.0, 0.0, 18.0, 36.0, 54.0, 72.0]:
+		# Firing pattern leaves a clear 30-degree gap (-15 to 15) in the middle for the player to hide in!
+		for angle in [-75.0, -60.0, -45.0, -30.0, -15.0, 15.0, 30.0, 45.0, 60.0, 75.0]:
 			directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
 		var origin := global_position + Vector2(0, 150)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)

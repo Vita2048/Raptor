@@ -108,25 +108,25 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		collision_layer = 8
 		collision_mask = 1
 		sprite.texture = AssetDB.random_particle("flash")
-		sprite.modulate = Color(5.0, 0.6, 0.2, 1.0)
-		sprite.scale = Vector2.ONE * 0.07
+		sprite.modulate = Color(5.0, 0.2, 0.2, 1.0)
+		sprite.scale = Vector2.ONE * 0.032
 		
-		trail.default_color = Color(4.0, 0.3, 0.1, 0.8)
-		trail.width = 18.0
-		trail.add_point(Vector2(0.0, 0.0))
-		trail.add_point(Vector2(0.0, 14.0))
+		trail.default_color = Color(5.0, 0.2, 0.3, 0.8)
+		trail.width = 12.0
+		trail.add_point(Vector2(0.0, 6.0))
+		trail.add_point(Vector2(0.0, 48.0))
 		
-		core_trail.default_color = Color(5.0, 4.0, 1.0, 1.0)
-		core_trail.width = 8.0
-		core_trail.add_point(Vector2(0.0, 0.0))
-		core_trail.add_point(Vector2(0.0, 10.0))
+		core_trail.default_color = Color(5.0, 5.0, 5.0, 1.0)
+		core_trail.width = 4.0
+		core_trail.add_point(Vector2(0.0, 6.0))
+		core_trail.add_point(Vector2(0.0, 42.0))
 		
-		sparkles.color = Color(4.0, 0.4, 0.1, 0.9)
-		sparkles.amount = 14
-		sparkles.initial_velocity_min = 15.0
-		sparkles.initial_velocity_max = 45.0
-		sparkles.scale_amount_min = 3.0
-		sparkles.scale_amount_max = 6.0
+		sparkles.color = Color(5.0, 0.2, 0.3, 0.9)
+		sparkles.amount = 16
+		sparkles.initial_velocity_min = 30.0
+		sparkles.initial_velocity_max = 80.0
+		sparkles.scale_amount_min = 2.0
+		sparkles.scale_amount_max = 5.0
 	trail.modulate.a = 0.78
 	core_trail.modulate.a = 0.9
 	set_deferred("monitoring", true)
