@@ -1,8 +1,10 @@
 extends Area2D
 
 signal destroyed(position: Vector2, score_value: int, was_boss: bool)
+signal boss_destroyed(position: Vector2)
 signal request_fire(origin: Vector2, directions: Array, speed: float, damage: int)
 
+const ExhaustPlumeScript := preload("res://scripts/ExhaustPlume.gd")
 const VIEW_SIZE := Vector2(1920, 1080)
 
 var enemy_type := "interceptor"
@@ -18,6 +20,7 @@ var fire_interval := 1.6
 var pool
 var sprite: Sprite2D
 var is_boss := false
+var exhaust_plumes: Array[Node2D] = []
 
 func _ready() -> void:
 	collision_layer = 2
@@ -48,6 +51,10 @@ func spawn(kind: String, start_position: Vector2) -> void:
 		"bomber":
 			sprite.texture = AssetDB.ship_textures["bomber"]
 			sprite.scale = Vector2.ONE * 0.85
+			_configure_exhausts([
+				{"position": Vector2(-21, -52), "length": 52.0, "width": 17.0},
+				{"position": Vector2(21, -52), "length": 52.0, "width": 17.0}
+			])
 			health = 85
 			speed = 160.0
 			score_value = 700
@@ -56,6 +63,12 @@ func spawn(kind: String, start_position: Vector2) -> void:
 		"boss":
 			sprite.texture = AssetDB.ship_textures["boss"]
 			sprite.scale = Vector2.ONE * 0.32
+			_configure_exhausts([
+				{"position": Vector2(-100, -168), "length": 108.0, "width": 30.0},
+				{"position": Vector2(-44, -182), "length": 118.0, "width": 34.0},
+				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
+				{"position": Vector2(100, -168), "length": 108.0, "width": 30.0}
+			])
 			health = 1200
 			speed = 0.0
 			score_value = 6000
@@ -64,6 +77,10 @@ func spawn(kind: String, start_position: Vector2) -> void:
 		_:
 			sprite.texture = AssetDB.ship_textures["interceptor"]
 			sprite.scale = Vector2.ONE * 0.9
+			_configure_exhausts([
+				{"position": Vector2(-36, -45), "length": 42.0, "width": 14.0},
+				{"position": Vector2(36, -45), "length": 42.0, "width": 14.0}
+			])
 			health = 42
 			speed = 310.0
 			score_value = 300
@@ -91,15 +108,23 @@ func _fire_pattern() -> void:
 		var directions: Array = []
 		for angle in [-64.0, -42.0, -22.0, 0.0, 22.0, 42.0, 64.0]:
 			directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
-		request_fire.emit(global_position + Vector2(0, 150), directions, 430.0, 12)
+		var origin := global_position + Vector2(0, 150)
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, directions, 430.0, 12)
 	elif enemy_type == "bomber":
-		request_fire.emit(global_position + Vector2(0, 64), [Vector2.DOWN, Vector2(0.25, 1.0), Vector2(-0.25, 1.0)], 390.0, 12)
+		var origin := global_position + Vector2(0, 64)
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, [Vector2.DOWN, Vector2(0.25, 1.0), Vector2(-0.25, 1.0)], 390.0, 12)
 	else:
-		request_fire.emit(global_position + Vector2(0, 48), [Vector2.DOWN], 470.0, 10)
+		var origin := global_position + Vector2(0, 48)
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, [Vector2.DOWN], 470.0, 10)
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.has_method("is_player_damage") and area.is_player_damage():
 		health -= area.damage
+		if area.has_method("spawn_impact"):
+			area.spawn_impact(area.global_position)
 		if area.has_method("return_to_pool"):
 			area.return_to_pool()
 		if is_boss:
@@ -108,6 +133,8 @@ func _on_area_entered(area: Area2D) -> void:
 			var death_position := global_position
 			var death_score := score_value
 			var death_was_boss := is_boss
+			if death_was_boss:
+				boss_destroyed.emit(death_position)
 			destroyed.emit(death_position, death_score, death_was_boss)
 			return_to_pool()
 
@@ -118,3 +145,17 @@ func return_to_pool() -> void:
 func on_pool_released() -> void:
 	monitoring = false
 	monitorable = false
+
+func _configure_exhausts(configs: Array) -> void:
+	while exhaust_plumes.size() < configs.size():
+		var exhaust := ExhaustPlumeScript.new()
+		add_child(exhaust)
+		exhaust_plumes.append(exhaust)
+	for i in range(exhaust_plumes.size()):
+		var exhaust := exhaust_plumes[i]
+		exhaust.visible = i < configs.size()
+		if i >= configs.size():
+			continue
+		var config: Dictionary = configs[i]
+		exhaust.position = config["position"]
+		exhaust.configure(config["length"], config["width"], PI)

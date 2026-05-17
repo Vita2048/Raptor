@@ -2,6 +2,7 @@ extends Area2D
 
 const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const ProjectileScript := preload("res://scripts/Projectile.gd")
+const ExhaustPlumeScript := preload("res://scripts/ExhaustPlume.gd")
 const VIEW_SIZE := Vector2(1920, 1080)
 
 var speed := 620.0
@@ -21,6 +22,8 @@ func _ready() -> void:
 	sprite.texture = AssetDB.ship_textures["player"]
 	sprite.scale = Vector2.ONE * 0.55
 	add_child(sprite)
+	_add_exhaust(Vector2(-20, 74), 82.0, 24.0, 0.0)
+	_add_exhaust(Vector2(20, 74), 82.0, 24.0, 0.0)
 
 	var shape := CollisionShape2D.new()
 	var circle := CircleShape2D.new()
@@ -43,16 +46,26 @@ func _physics_process(delta: float) -> void:
 
 func _shoot() -> void:
 	for offset in muzzle_offsets:
+		var muzzle_pos: Vector2 = global_position + offset
+		VFX.muzzle_flash(muzzle_pos, Vector2.UP, true)
 		var bullet := bullet_pool.acquire() as Area2D
-		bullet.launch(global_position + offset, Vector2.UP, 1120.0, 18, true)
+		bullet.launch(muzzle_pos, Vector2.UP, 1120.0, 18, true)
 
 func _create_bullet() -> Area2D:
 	var bullet := ProjectileScript.new()
 	bullet.name = "PlayerProjectile"
 	return bullet
 
+func _add_exhaust(local_position: Vector2, length: float, width: float, angle: float) -> void:
+	var exhaust := ExhaustPlumeScript.new()
+	exhaust.position = local_position
+	exhaust.configure(length, width, angle)
+	add_child(exhaust)
+
 func _on_area_entered(area: Area2D) -> void:
 	if area.has_method("is_enemy_damage") and area.is_enemy_damage():
 		GameState.damage_player(area.damage)
+		if area.has_method("spawn_impact"):
+			area.spawn_impact(global_position)
 		if area.has_method("return_to_pool"):
 			area.return_to_pool()

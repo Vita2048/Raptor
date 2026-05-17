@@ -45,6 +45,7 @@ func _spawn_boss() -> void:
 func _create_enemy() -> Area2D:
 	var enemy := EnemyShipScript.new()
 	enemy.destroyed.connect(_on_enemy_destroyed)
+	enemy.boss_destroyed.connect(_on_boss_destroyed)
 	enemy.request_fire.connect(_on_enemy_request_fire)
 	return enemy
 
@@ -61,6 +62,9 @@ func _on_enemy_request_fire(origin: Vector2, directions: Array, speed: float, da
 func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void:
 	GameState.add_score(score_value)
 	_spawn_explosion(pos, was_boss)
+
+func _on_boss_destroyed(pos: Vector2) -> void:
+	VFX.call_deferred("boss_explosion", pos)
 
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
 	if large:

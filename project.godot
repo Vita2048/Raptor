@@ -19,6 +19,7 @@ config/icon="res://assets/ships/PlayerShip.png"
 
 AssetDB="*res://scripts/AssetPreloader.gd"
 GameState="*res://scripts/GameState.gd"
+VFX="*res://scripts/VFXManager.gd"
 
 [display]
 

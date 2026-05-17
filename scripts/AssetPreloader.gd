@@ -111,11 +111,15 @@ func _load_spawn_areas(path: String) -> Array:
 		if coords_text.is_empty():
 			continue
 		var points := _coords_to_points(coords_text)
-		if points.is_empty():
+		if points.size() < 2:
 			continue
+		# The image-map file has stray polygon points in some entries; gameplay uses
+		# the first two coordinate pairs as the intended rectangular spawn area.
+		points = [points[0], points[1]]
 		areas.append({
 			"name": title if not title.is_empty() else href,
 			"points": points,
+			"is_rect": true,
 			"rect": _points_to_rect(points)
 		})
 	return areas

@@ -17,6 +17,7 @@ func _ready() -> void:
 		var sprite := Sprite2D.new()
 		sprite.centered = false
 		sprite.texture = texture
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
 		sprite.scale = Vector2.ONE * image_scale
 		add_child(sprite)
 		sprites.append(sprite)
