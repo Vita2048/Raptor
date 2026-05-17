@@ -152,6 +152,19 @@ func _fire_pattern() -> void:
 func _on_area_entered(area: Area2D) -> void:
 	if is_dead:
 		return
+	# Direct ship-to-ship collision: enemy rams the player
+	if area.has_method("_shoot"):
+		is_dead = true
+		var ram_damage := 40 if is_boss else 25
+		GameState.damage_player(ram_damage)
+		VFX.impact_spark(global_position, Vector2(0, 220), false)
+		var death_position := global_position
+		var death_score := score_value
+		destroyed.emit(death_position, death_score, false)
+		if is_boss:
+			boss_destroyed.emit(death_position)
+		return_to_pool()
+		return
 	if area.has_method("is_player_damage") and area.is_player_damage():
 		health -= area.damage
 		if area.has_method("spawn_impact"):
