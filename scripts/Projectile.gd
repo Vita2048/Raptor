@@ -10,6 +10,8 @@ var core_trail: Line2D
 var sparkles: CPUParticles2D
 var impact_sent := false
 
+static var _shared_add_mat: CanvasItemMaterial
+
 func _ready() -> void:
 	var shape := CollisionShape2D.new()
 	var capsule := CapsuleShape2D.new()
@@ -20,9 +22,10 @@ func _ready() -> void:
 
 	sprite = Sprite2D.new()
 	sprite.centered = true
-	var sprite_material := CanvasItemMaterial.new()
-	sprite_material.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	sprite.material = sprite_material
+	if not _shared_add_mat:
+		_shared_add_mat = CanvasItemMaterial.new()
+		_shared_add_mat.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
+	sprite.material = _shared_add_mat
 	add_child(sprite)
 
 	trail = Line2D.new()
@@ -61,9 +64,7 @@ func _ready() -> void:
 	scale_curve.add_point(Vector2(0.0, 1.0))
 	scale_curve.add_point(Vector2(1.0, 0.0))
 	sparkles.scale_amount_curve = scale_curve
-	var pm := CanvasItemMaterial.new()
-	pm.blend_mode = CanvasItemMaterial.BLEND_MODE_ADD
-	sparkles.material = pm
+	sparkles.material = _shared_add_mat
 	add_child(sparkles)
 	monitoring = false
 	monitorable = false
@@ -88,11 +89,15 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		sprite.modulate = Color(4.0, 1.35, 0.25, 1.0)
 		sprite.scale = Vector2.ONE * 0.032
 		
+		trail.texture = null
+		trail.gradient = null
 		trail.default_color = Color(0.2, 2.5, 5.0, 0.8)
 		trail.width = 12.0
 		trail.add_point(Vector2(0.0, 6.0))
 		trail.add_point(Vector2(0.0, 48.0))
 		
+		core_trail.texture = null
+		core_trail.gradient = null
 		core_trail.default_color = Color(5.0, 5.0, 5.0, 1.0)
 		core_trail.width = 4.0
 		core_trail.add_point(Vector2(0.0, 6.0))
@@ -105,35 +110,54 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		sparkles.scale_amount_min = 2.0
 		sparkles.scale_amount_max = 5.0
 	else:
+		# Fancy Glowing Enemy Energy Bolt (inspired by bright glowing orbs with subtle trails)
 		collision_layer = 8
 		collision_mask = 1
+		
+		# Large, soft, intense glowing halo
 		sprite.texture = AssetDB.random_particle("flash")
-		sprite.modulate = Color(5.0, 0.2, 0.2, 1.0)
-		sprite.scale = Vector2.ONE * 0.032
+		sprite.modulate = Color(6.0, 0.05, 0.15, 0.9) # Intense deep red/pink glow
+		sprite.scale = Vector2.ONE * 0.14
 		
-		trail.default_color = Color(5.0, 0.2, 0.3, 0.8)
-		trail.width = 12.0
-		trail.add_point(Vector2(0.0, 6.0))
-		trail.add_point(Vector2(0.0, 48.0))
+		trail.texture = null
+		var trail_grad := Gradient.new()
+		trail_grad.set_color(0, Color(4.0, 0.1, 0.1, 1.0)) # Bright red at head
+		trail_grad.set_color(1, Color(1.5, 0.0, 0.0, 0.0)) # Fading red tail
+		trail.gradient = trail_grad
+		trail.width = 22.0
+		trail.add_point(Vector2(0.0, 0.0))
+		trail.add_point(Vector2(0.0, 10.0))
+		trail.add_point(Vector2(0.0, 24.0))
+		trail.add_point(Vector2(0.0, 42.0))
 		
-		core_trail.default_color = Color(5.0, 5.0, 5.0, 1.0)
-		core_trail.width = 4.0
-		core_trail.add_point(Vector2(0.0, 6.0))
-		core_trail.add_point(Vector2(0.0, 42.0))
+		core_trail.texture = null
+		var core_grad := Gradient.new()
+		core_grad.set_color(0, Color(4.0, 3.0, 3.0, 1.0)) # Pure white/hot pink core
+		core_grad.set_color(1, Color(3.0, 1.0, 1.0, 0.0)) # Fades out quickly
+		core_trail.gradient = core_grad
+		core_trail.width = 10.0
+		core_trail.add_point(Vector2(0.0, 0.0))
+		core_trail.add_point(Vector2(0.0, 8.0))
+		core_trail.add_point(Vector2(0.0, 18.0))
 		
 		sparkles.color = Color(5.0, 0.2, 0.3, 0.9)
-		sparkles.amount = 16
-		sparkles.initial_velocity_min = 30.0
-		sparkles.initial_velocity_max = 80.0
-		sparkles.scale_amount_min = 2.0
+		sparkles.amount = 14
+		sparkles.initial_velocity_min = 15.0
+		sparkles.initial_velocity_max = 50.0
+		sparkles.scale_amount_min = 2.5
 		sparkles.scale_amount_max = 5.0
-	trail.modulate.a = 0.78
-	core_trail.modulate.a = 0.9
+		sparkles.lifetime = 0.22
+	trail.modulate.a = 0.9
+	core_trail.modulate.a = 1.0
 	set_deferred("monitoring", true)
 	set_deferred("monitorable", true)
 
 func _physics_process(delta: float) -> void:
 	position += velocity * delta
+	# Pulsing orb scale for enemy shots
+	if not from_player and sprite != null:
+		var pulse := 0.058 + sin(Time.get_ticks_msec() * 0.007) * 0.009
+		sprite.scale = Vector2.ONE * pulse
 	if position.y < -120.0 or position.y > 1220.0 or position.x < -120.0 or position.x > 2040.0:
 		return_to_pool()
 

@@ -4,6 +4,7 @@ var plume_length := 90.0
 var plume_width := 30.0
 var flicker_phase := 0.0
 var pulse_speed := 16.0
+var _frame_count := 0
 
 func _ready() -> void:
 	z_index = -8
@@ -18,7 +19,9 @@ func configure(length: float, width: float, angle: float) -> void:
 	rotation = angle
 
 func _process(_delta: float) -> void:
-	queue_redraw()
+	_frame_count += 1
+	if _frame_count & 1 == 0:
+		queue_redraw()
 
 func _draw() -> void:
 	var t := Time.get_ticks_msec() * 0.001 + flicker_phase

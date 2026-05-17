@@ -14,7 +14,7 @@ var boss_spawned := false
 
 func _ready() -> void:
 	enemy_pool = ObjectPool.new(_create_enemy, self, 22)
-	enemy_bullet_pool = ObjectPool.new(_create_enemy_bullet, get_parent(), 120)
+	enemy_bullet_pool = ObjectPool.new(_create_enemy_bullet, get_parent(), 60)
 	GameState.game_over.connect(_on_game_over)
 
 func _process(delta: float) -> void:
