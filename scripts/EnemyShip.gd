@@ -19,7 +19,9 @@ var fire_timer := 1.5
 var fire_interval := 1.6
 var pool
 var sprite: Sprite2D
+var collision_shape: CollisionShape2D
 var is_boss := false
+var is_dead := false
 var exhaust_plumes: Array[Node2D] = []
 
 func _ready() -> void:
@@ -30,11 +32,11 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	sprite = Sprite2D.new()
 	add_child(sprite)
-	var shape := CollisionShape2D.new()
+	collision_shape = CollisionShape2D.new()
 	var circle := CircleShape2D.new()
 	circle.radius = 52.0
-	shape.shape = circle
-	add_child(shape)
+	collision_shape.shape = circle
+	add_child(collision_shape)
 
 func set_pool(value) -> void:
 	pool = value
@@ -42,15 +44,17 @@ func set_pool(value) -> void:
 func spawn(kind: String, start_position: Vector2) -> void:
 	enemy_type = kind
 	is_boss = kind == "boss"
+	is_dead = false
 	global_position = start_position
 	base_x = start_position.x
 	phase = randf_range(0.0, TAU)
-	monitoring = true
-	monitorable = true
+	set_deferred("monitoring", true)
+	set_deferred("monitorable", true)
 	match kind:
 		"bomber":
 			sprite.texture = AssetDB.ship_textures["bomber"]
 			sprite.scale = Vector2.ONE * 0.85
+			(collision_shape.shape as CircleShape2D).radius = 48.0
 			_configure_exhausts([
 				{"position": Vector2(-21, -52), "length": 52.0, "width": 17.0},
 				{"position": Vector2(21, -52), "length": 52.0, "width": 17.0}
@@ -63,20 +67,22 @@ func spawn(kind: String, start_position: Vector2) -> void:
 		"boss":
 			sprite.texture = AssetDB.ship_textures["boss"]
 			sprite.scale = Vector2.ONE * 0.32
+			(collision_shape.shape as CircleShape2D).radius = 160.0
 			_configure_exhausts([
 				{"position": Vector2(0, -168), "length": 108.0, "width": 30.0},
 				{"position": Vector2(-44, -182), "length": 118.0, "width": 34.0},
 				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
 				
 			])
-			health = 380
+			health = 4520
 			speed = 0.0
 			score_value = 6000
-			amplitude = 150.0
-			fire_interval = 0.7
+			amplitude = 180.0
+			fire_interval = 0.35
 		_:
 			sprite.texture = AssetDB.ship_textures["interceptor"]
 			sprite.scale = Vector2.ONE * 0.9
+			(collision_shape.shape as CircleShape2D).radius = 38.0
 			_configure_exhausts([
 				{"position": Vector2(-36, -45), "length": 42.0, "width": 14.0},
 				{"position": Vector2(36, -45), "length": 42.0, "width": 14.0}
@@ -106,11 +112,11 @@ func _physics_process(delta: float) -> void:
 func _fire_pattern() -> void:
 	if is_boss:
 		var directions: Array = []
-		for angle in [-64.0, -42.0, -22.0, 0.0, 22.0, 42.0, 64.0]:
+		for angle in [-72.0, -54.0, -36.0, -18.0, 0.0, 18.0, 36.0, 54.0, 72.0]:
 			directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
 		var origin := global_position + Vector2(0, 150)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, directions, 430.0, 12)
+		request_fire.emit(origin, directions, 520.0, 15)
 	elif enemy_type == "bomber":
 		var origin := global_position + Vector2(0, 64)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
@@ -121,6 +127,8 @@ func _fire_pattern() -> void:
 		request_fire.emit(origin, [Vector2.DOWN], 470.0, 10)
 
 func _on_area_entered(area: Area2D) -> void:
+	if is_dead:
+		return
 	if area.has_method("is_player_damage") and area.is_player_damage():
 		health -= area.damage
 		if area.has_method("spawn_impact"):
@@ -130,12 +138,13 @@ func _on_area_entered(area: Area2D) -> void:
 		if is_boss:
 			GameState.boss_health_changed.emit(max(health, 0), max_health)
 		if health <= 0:
+			is_dead = true
 			var death_position := global_position
 			var death_score := score_value
 			var death_was_boss := is_boss
+			destroyed.emit(death_position, death_score, death_was_boss)
 			if death_was_boss:
 				boss_destroyed.emit(death_position)
-			destroyed.emit(death_position, death_score, death_was_boss)
 			return_to_pool()
 
 func return_to_pool() -> void:

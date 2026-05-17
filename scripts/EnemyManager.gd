@@ -65,6 +65,8 @@ func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void
 
 func _on_boss_destroyed(pos: Vector2) -> void:
 	VFX.call_deferred("boss_explosion", pos)
+	boss_spawned = false
+	GameState.end_boss()
 
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
 	if large:

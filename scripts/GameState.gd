@@ -6,17 +6,19 @@ signal boss_started(max_health: int)
 signal boss_health_changed(health: int, max_health: int)
 signal game_over
 
-const BOSS_SCORE_THRESHOLD := 5000
+const BOSS_INTERVAL := 5000
 
 var score := 0
 var player_health := 100
 var player_max_health := 100
 var boss_active := false
+var next_boss_score := BOSS_INTERVAL
 
 func reset() -> void:
 	score = 0
 	player_health = player_max_health
 	boss_active = false
+	next_boss_score = BOSS_INTERVAL
 	score_changed.emit(score)
 	player_health_changed.emit(player_health, player_max_health)
 	boss_health_changed.emit(0, 1)
@@ -32,9 +34,15 @@ func damage_player(amount: int) -> void:
 		game_over.emit()
 
 func should_start_boss() -> bool:
-	return not boss_active and score >= BOSS_SCORE_THRESHOLD
+	return not boss_active and score >= next_boss_score
 
 func begin_boss(max_health: int) -> void:
 	boss_active = true
 	boss_started.emit(max_health)
 	boss_health_changed.emit(max_health, max_health)
+
+func end_boss() -> void:
+	boss_active = false
+	next_boss_score = score + BOSS_INTERVAL
+	boss_health_changed.emit(0, 1)
+
