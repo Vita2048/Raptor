@@ -28,9 +28,12 @@ func _build_ui() -> void:
 	root.add_child(health_bar)
 
 	score_label = Label.new()
-	score_label.position = Vector2(1530, 28)
-	score_label.size = Vector2(350, 44)
-	score_label.add_theme_font_size_override("font_size", 34)
+	score_label.position = Vector2(1530, 24)
+	score_label.size = Vector2(350, 50)
+	score_label.add_theme_font_size_override("font_size", 32)
+	score_label.add_theme_color_override("font_color", Color(0.9, 2.4, 3.5, 1.0))
+	score_label.add_theme_constant_override("outline_size", 4)
+	score_label.add_theme_color_override("font_outline_color", Color(0.1, 0.25, 0.45, 0.9))
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	root.add_child(score_label)
 
@@ -40,6 +43,8 @@ func _build_ui() -> void:
 	boss_bar.size = Vector2(620, 30)
 	boss_bar.max_value = 100
 	boss_bar.value = 100
+	boss_bar.add_theme_stylebox_override("fill", StyleBoxFlat.new())
+	boss_bar.add_theme_stylebox_override("bg", StyleBoxFlat.new())
 	root.add_child(boss_bar)
 
 	game_over_label = Label.new()

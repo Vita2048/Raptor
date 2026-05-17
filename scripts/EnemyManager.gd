@@ -32,7 +32,7 @@ func _spawn_wave() -> void:
 	var start_x := randf_range(180.0, 1740.0)
 	for i in range(count):
 		var enemy := enemy_pool.acquire() as Area2D
-		var kind := "bomber" if randf() < 0.25 else "interceptor"
+		var kind := "bomber" if randf() < 0.2 else ("interceptor1" if randf() < 0.35 else "interceptor")
 		enemy.spawn(kind, Vector2(start_x + (i - count * 0.5) * 150.0, -120.0 - i * 70.0))
 
 func _spawn_boss() -> void:

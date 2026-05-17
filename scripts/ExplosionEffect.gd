@@ -16,7 +16,7 @@ func _ready() -> void:
 
 func configure(is_large: bool) -> void:
 	large_scale = is_large
-	size_multiplier = 3.1 if is_large else 1.0
+	size_multiplier = 1.52 if is_large else 1.0
 
 func burst() -> void:
 	if large_scale:
@@ -63,7 +63,7 @@ func _build_layers() -> void:
 func _play_flash() -> void:
 	flash_sprite.visible = true
 	flash_sprite.modulate = Color.WHITE
-	var base := (0.26 if large_scale else 0.16) * size_multiplier
+	var base := (0.182 if large_scale else 0.16) * size_multiplier
 	var frames := AssetDB.flash_textures
 	var frame_time := 0.15 / float(frames.size())
 	for i in range(frames.size()):
@@ -81,7 +81,7 @@ func _play_boss_flash() -> void:
 	boss_flash_sprite.scale = Vector2.ONE * 0.85
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 2.4, 0.34).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 1.68, 0.34).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	tween.tween_property(boss_flash_sprite, "modulate:a", 0.0, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await tween.finished
 	boss_flash_sprite.visible = false
@@ -89,7 +89,7 @@ func _play_boss_flash() -> void:
 func _play_fireball() -> void:
 	fireball_sprite.visible = true
 	fireball_sprite.modulate = Color(1.0, 0.78, 0.48, 1.0)
-	var base := (0.24 if large_scale else 0.13) * size_multiplier
+	var base := (0.168 if large_scale else 0.13) * size_multiplier
 	var frames := AssetDB.explosion_textures
 	var frame_time := 1.0 / 20.0
 	for i in range(frames.size()):
@@ -164,8 +164,8 @@ func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int,
 	material.damping_max = damping * 1.25
 	material.angular_velocity_min = -260.0
 	material.angular_velocity_max = 260.0
-	material.scale_min = scale_min * (2.2 if large_scale else 1.0)
-	material.scale_max = scale_max * (2.2 if large_scale else 1.0)
+	material.scale_min = scale_min * (1.54 if large_scale else 1.0)
+	material.scale_max = scale_max * (1.54 if large_scale else 1.0)
 	if layer_name == "BlackSmokeTrail":
 		material.gravity = Vector3(0.0, MAP_SCROLL_SPEED * 0.34, 0.0)
 	else:

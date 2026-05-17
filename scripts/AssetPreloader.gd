@@ -42,6 +42,7 @@ func load_all() -> void:
 	ship_textures = {
 		"player": load(SHIPS_DIR + "PlayerShip.png"),
 		"interceptor": load(SHIPS_DIR + "EnemyInterceptor.png"),
+		"interceptor1": load(SHIPS_DIR + "EnemyInterceptor1.png"),
 		"bomber": load(SHIPS_DIR + "Bomber.png"),
 		"boss": load(SHIPS_DIR + "BossShip.png")
 	}

@@ -79,6 +79,23 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			score_value = 6000
 			amplitude = 180.0
 			fire_interval = 0.35
+		"interceptor1":
+			sprite.texture = AssetDB.ship_textures["interceptor1"]
+			# Texture is 642x609 — scale to match the ~123px display size of other interceptors
+			sprite.scale = Vector2.ONE * 0.19
+			(collision_shape.shape as CircleShape2D).radius = 30.0
+			# Exhaust nozzles are at the top of the sprite (y≈4 in image coords).
+			# Pixel offset from image center (321,304): left=(-97,-300), right=(96,-300)
+			# Multiplied by scale 0.19 → local coords below
+			_configure_exhausts([
+				{"position": Vector2(-18, -57), "length": 40.0, "width": 13.0},
+				{"position": Vector2(18, -57), "length": 40.0, "width": 13.0}
+			])
+			health = 44
+			speed = 295.0
+			score_value = 320
+			amplitude = 105.0
+			fire_interval = 1.65
 		_:
 			sprite.texture = AssetDB.ship_textures["interceptor"]
 			sprite.scale = Vector2.ONE * 0.9
@@ -122,6 +139,11 @@ func _fire_pattern() -> void:
 		var origin := global_position + Vector2(0, 64)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
 		request_fire.emit(origin, [Vector2.DOWN, Vector2(0.25, 1.0), Vector2(-0.25, 1.0)], 390.0, 12)
+	elif enemy_type == "interceptor1":
+		# Twin-spread shot: two slightly angled bolts for a more aggressive feel
+		var origin := global_position + Vector2(0, 30)
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, [Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized()], 450.0, 11)
 	else:
 		var origin := global_position + Vector2(0, 48)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)

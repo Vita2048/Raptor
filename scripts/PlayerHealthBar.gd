@@ -59,5 +59,7 @@ func _draw() -> void:
 	var font: Font = ThemeDB.fallback_font
 	var label: String = "SHIP ARMOR"
 	var value: String = "%03d / %03d" % [health, max_health]
-	draw_string(font, Vector2(18, 24), label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 20, Color(0.72, 1.7, 2.3, 0.92))
-	draw_string(font, Vector2(size.x - 164, 42), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 24, Color(0.88, 2.3, 3.3, 0.96))
+	draw_string(font, Vector2(18, -4), label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.6, 1.8, 2.8, 1.0))
+	draw_string(font, Vector2(19, -3), label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.1, 0.3, 0.5, 0.6))
+	draw_string(font, Vector2(size.x - 165, 40), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 26, Color(0.95, 2.5, 3.6, 1.0))
+	draw_string(font, Vector2(size.x - 164, 41), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 26, Color(0.2, 0.5, 0.7, 0.5))

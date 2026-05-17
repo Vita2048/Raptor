@@ -70,11 +70,11 @@ func _play_boss_screen_blast(pos: Vector2) -> void:
 	flash.centered = true
 	flash.z_index = 260
 	flash.modulate = Color(5.0, 2.4, 0.9, 1.0)
-	flash.scale = Vector2.ONE * 0.6
+	flash.scale = Vector2.ONE * 0.42
 	add_child(flash)
 	var tween := flash.create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(flash, "scale", Vector2.ONE * 5.0, 0.42).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tween.tween_property(flash, "scale", Vector2.ONE * 3.5, 0.42).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flash, "modulate:a", 0.0, 0.42)
 	await tween.finished
 	flash.queue_free()
