@@ -39,7 +39,7 @@ func _spawn_boss() -> void:
 	boss_spawned = true
 	enemy_pool.release_all()
 	var boss := enemy_pool.acquire() as Area2D
-	boss.spawn("boss", Vector2(960, -360))
+	boss.spawn("boss", Vector2(960, -180))
 	GameState.begin_boss(boss.max_health)
 
 func _create_enemy() -> Area2D:

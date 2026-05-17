@@ -4,6 +4,9 @@ const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const ProjectileScript := preload("res://scripts/Projectile.gd")
 const ExhaustPlumeScript := preload("res://scripts/ExhaustPlume.gd")
 const VIEW_SIZE := Vector2(1920, 1080)
+const MAX_BANK_ANGLE := deg_to_rad(10.0)
+const BANK_RESPONSE := 10.0
+const INCOMING_DAMAGE_SCALE := 0.1
 
 var speed := 620.0
 var shoot_cooldown := 0.11
@@ -39,6 +42,7 @@ func _physics_process(delta: float) -> void:
 	position += input_vector * speed * delta
 	position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
 	position.y = clamp(position.y, 610.0, VIEW_SIZE.y - 95.0)
+	rotation = lerp_angle(rotation, input_vector.x * MAX_BANK_ANGLE, min(delta * BANK_RESPONSE, 1.0))
 	shoot_timer = max(shoot_timer - delta, 0.0)
 	if Input.is_action_pressed("fire") and shoot_timer <= 0.0:
 		_shoot()
@@ -46,7 +50,7 @@ func _physics_process(delta: float) -> void:
 
 func _shoot() -> void:
 	for offset in muzzle_offsets:
-		var muzzle_pos: Vector2 = global_position + offset
+		var muzzle_pos: Vector2 = to_global(offset)
 		VFX.muzzle_flash(muzzle_pos, Vector2.UP, true)
 		var bullet := bullet_pool.acquire() as Area2D
 		bullet.launch(muzzle_pos, Vector2.UP, 1120.0, 18, true)
@@ -64,7 +68,8 @@ func _add_exhaust(local_position: Vector2, length: float, width: float, angle: f
 
 func _on_area_entered(area: Area2D) -> void:
 	if area.has_method("is_enemy_damage") and area.is_enemy_damage():
-		GameState.damage_player(area.damage)
+		var reduced_damage: int = max(1, roundi(float(area.damage) * INCOMING_DAMAGE_SCALE))
+		GameState.damage_player(reduced_damage)
 		if area.has_method("spawn_impact"):
 			area.spawn_impact(global_position)
 		if area.has_method("return_to_pool"):

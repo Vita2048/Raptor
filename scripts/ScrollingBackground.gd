@@ -13,11 +13,11 @@ func _ready() -> void:
 	var texture := AssetDB.bridge_texture
 	image_scale = VIEW_SIZE.x / texture.get_width()
 	loop_height = texture.get_height() * image_scale
-	for i in range(2):
+	for i in range(3):
 		var sprite := Sprite2D.new()
 		sprite.centered = false
 		sprite.texture = texture
-		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
 		sprite.scale = Vector2.ONE * image_scale
 		add_child(sprite)
 		sprites.append(sprite)
@@ -31,5 +31,5 @@ func _update_sprite_positions() -> void:
 	if sprites.size() < 2:
 		return
 	var first_y := scroll_offset - loop_height
-	sprites[0].position = Vector2.ZERO + Vector2(0.0, first_y)
-	sprites[1].position = Vector2.ZERO + Vector2(0.0, first_y + loop_height)
+	for i in range(sprites.size()):
+		sprites[i].position = Vector2(0.0, first_y + float(i) * loop_height)

@@ -64,12 +64,12 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			sprite.texture = AssetDB.ship_textures["boss"]
 			sprite.scale = Vector2.ONE * 0.32
 			_configure_exhausts([
-				{"position": Vector2(-100, -168), "length": 108.0, "width": 30.0},
+				{"position": Vector2(0, -168), "length": 108.0, "width": 30.0},
 				{"position": Vector2(-44, -182), "length": 118.0, "width": 34.0},
 				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
-				{"position": Vector2(100, -168), "length": 108.0, "width": 30.0}
+				
 			])
-			health = 1200
+			health = 380
 			speed = 0.0
 			score_value = 6000
 			amplitude = 150.0
@@ -91,7 +91,7 @@ func spawn(kind: String, start_position: Vector2) -> void:
 
 func _physics_process(delta: float) -> void:
 	if is_boss:
-		var target := Vector2(base_x + sin(Time.get_ticks_msec() * 0.0014) * amplitude, 150.0)
+		var target := Vector2(base_x + sin(Time.get_ticks_msec() * 0.0014) * amplitude, 280.0)
 		position = position.lerp(target, 1.9 * delta)
 	else:
 		position.y += speed * delta
