@@ -5,6 +5,7 @@ const WorldSpawnerScript := preload("res://scripts/WorldSpawner.gd")
 const PlayerShipScript := preload("res://scripts/PlayerShip.gd")
 const EnemyManagerScript := preload("res://scripts/EnemyManager.gd")
 const HUDScript := preload("res://scripts/HUD.gd")
+const ExplosionScene := preload("res://scenes/ExplosionEffect.tscn")
 
 var background: Node2D
 var world_spawner: Node2D
@@ -42,6 +43,34 @@ func _build_scene() -> void:
 	hud = HUDScript.new()
 	hud.name = "HUD"
 	add_child(hud)
+
+	GameState.game_over.connect(_on_game_over)
+
+func _on_game_over() -> void:
+	# Explode the player ship then hide it
+	if is_instance_valid(player):
+		var death_pos := player.global_position
+		# Spawn large explosion at player position
+		var explosion := ExplosionScene.instantiate()
+		explosion.top_level = true
+		explosion.global_position = death_pos
+		explosion.configure(true)
+		add_child(explosion)
+		explosion.burst()
+		# A second delayed smaller burst for drama
+		await get_tree().create_timer(0.18).timeout
+		if is_instance_valid(self):
+			var explosion2 := ExplosionScene.instantiate()
+			explosion2.top_level = true
+			explosion2.global_position = death_pos + Vector2(randf_range(-60, 60), randf_range(-60, 60))
+			explosion2.configure(false)
+			add_child(explosion2)
+			explosion2.burst()
+		# Hide ship
+		if is_instance_valid(player):
+			player.visible = false
+			player.set_deferred("monitoring", false)
+			player.set_deferred("monitorable", false)
 
 func _add_world_environment() -> void:
 	var world_environment := WorldEnvironment.new()

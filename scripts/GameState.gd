@@ -13,11 +13,13 @@ var player_health := 100
 var player_max_health := 100
 var boss_active := false
 var next_boss_score := BOSS_INTERVAL
+var game_active := true
 
 func reset() -> void:
 	score = 0
 	player_health = player_max_health
 	boss_active = false
+	game_active = true
 	next_boss_score = BOSS_INTERVAL
 	score_changed.emit(score)
 	player_health_changed.emit(player_health, player_max_health)
@@ -28,10 +30,19 @@ func add_score(amount: int) -> void:
 	score_changed.emit(score)
 
 func damage_player(amount: int) -> void:
+	if not game_active:
+		return
 	player_health = max(player_health - amount, 0)
 	player_health_changed.emit(player_health, player_max_health)
 	if player_health <= 0:
+		game_active = false
 		game_over.emit()
+
+func heal_player(amount: int) -> void:
+	if not game_active:
+		return
+	player_health = min(player_health + amount, player_max_health)
+	player_health_changed.emit(player_health, player_max_health)
 
 func should_start_boss() -> bool:
 	return not boss_active and score >= next_boss_score

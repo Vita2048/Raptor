@@ -4,6 +4,7 @@ const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const EnemyShipScript := preload("res://scripts/EnemyShip.gd")
 const ProjectileScript := preload("res://scripts/Projectile.gd")
 const ExplosionScene := preload("res://scenes/ExplosionEffect.tscn")
+const EnergyItemScript := preload("res://scripts/EnergyItem.gd")
 
 var player: Node2D
 var enemy_pool: ObjectPool
@@ -62,11 +63,19 @@ func _on_enemy_request_fire(origin: Vector2, directions: Array, speed: float, da
 func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void:
 	GameState.add_score(score_value)
 	_spawn_explosion(pos, was_boss)
+	if not was_boss and randf() < 0.20:
+		_spawn_energy_item(pos)
 
 func _on_boss_destroyed(pos: Vector2) -> void:
 	VFX.call_deferred("boss_explosion", pos)
 	boss_spawned = false
 	GameState.end_boss()
+
+func _spawn_energy_item(pos: Vector2) -> void:
+	var item := EnergyItemScript.new()
+	item.top_level = true
+	item.global_position = pos
+	get_parent().add_child(item)
 
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
 	if large:
