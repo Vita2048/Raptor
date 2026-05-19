@@ -15,6 +15,11 @@ var bullet_pool: ObjectPool
 var muzzle_offsets := [Vector2(-46, -104), Vector2(46, -104)]
 var sprite: Sprite2D
 
+# Touch/Android Controls
+var is_android := false
+var auto_shoot := false
+var touch_indicator: Sprite2D
+
 func _ready() -> void:
 	collision_layer = 1
 	collision_mask = 10
@@ -37,16 +42,76 @@ func _ready() -> void:
 	bullet_pool = ObjectPool.new(_create_bullet, get_parent(), 80)
 	area_entered.connect(_on_area_entered)
 
+	is_android = OS.has_feature("android") or OS.get_name() == "Android" or DisplayServer.is_touchscreen_available()
+
+	if is_android:
+		touch_indicator = Sprite2D.new()
+		touch_indicator.texture = load("res://assets/items/energy.png")
+		touch_indicator.scale = Vector2.ONE * 0.55
+		touch_indicator.modulate = Color(0.1, 0.7, 3.5, 0.0)
+		touch_indicator.z_index = -1
+		add_child(touch_indicator)
+
 func _physics_process(delta: float) -> void:
 	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	position += input_vector * speed * delta
 	position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
 	position.y = clamp(position.y, 610.0, VIEW_SIZE.y - 95.0)
-	rotation = lerp_angle(rotation, input_vector.x * MAX_BANK_ANGLE, min(delta * BANK_RESPONSE, 1.0))
+
+	if input_vector.x != 0.0 or not is_android:
+		rotation = lerp_angle(rotation, input_vector.x * MAX_BANK_ANGLE, min(delta * BANK_RESPONSE, 1.0))
+
 	shoot_timer = max(shoot_timer - delta, 0.0)
-	if Input.is_action_pressed("fire") and shoot_timer <= 0.0:
+	var wants_to_shoot := Input.is_action_pressed("fire") or (is_android and auto_shoot)
+	if wants_to_shoot and shoot_timer <= 0.0:
 		_shoot()
 		shoot_timer = shoot_cooldown
+
+	# Update active automatic shooting halo indicator
+	if is_android and touch_indicator:
+		if auto_shoot:
+			var pulse := 0.45 + sin(Time.get_ticks_msec() * 0.012) * 0.2
+			touch_indicator.modulate = Color(0.1, 0.8, 4.0, pulse * 0.85)
+			touch_indicator.rotation += delta * 1.6
+			touch_indicator.scale = Vector2.ONE * (0.62 + pulse * 0.12)
+		else:
+			touch_indicator.modulate.a = move_toward(touch_indicator.modulate.a, 0.0, delta * 4.0)
+
+func _input(event: InputEvent) -> void:
+	if not is_android:
+		return
+
+	if event is InputEventScreenTouch:
+		if event.pressed:
+			var local_pos := to_local(event.position)
+			# Touch tapping detection window within 95px around ship
+			if local_pos.length() <= 95.0:
+				auto_shoot = not auto_shoot
+				_play_toggle_flash()
+
+	elif event is InputEventScreenDrag:
+		# Swiping/dragging moves the ship smoothly relative to touch drag
+		position += event.relative
+		position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
+		position.y = clamp(position.y, 610.0, VIEW_SIZE.y - 95.0)
+
+		# Custom drag bank rotation mapping based on touch drag direction
+		var target_bank := clampf(event.relative.x * 0.18, -1.0, 1.0) * MAX_BANK_ANGLE
+		rotation = lerp_angle(rotation, target_bank, 0.22)
+
+func _play_toggle_flash() -> void:
+	var flash := Sprite2D.new()
+	flash.texture = sprite.texture
+	flash.scale = sprite.scale
+	flash.modulate = Color(2.0, 2.5, 5.0, 1.0)
+	flash.z_index = 10
+	add_child(flash)
+	var tw := flash.create_tween()
+	tw.set_parallel(true)
+	tw.tween_property(flash, "scale", sprite.scale * 1.6, 0.22).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tw.tween_property(flash, "modulate:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	await tw.finished
+	flash.queue_free()
 
 func _shoot() -> void:
 	for offset in muzzle_offsets:
