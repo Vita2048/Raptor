@@ -41,12 +41,20 @@ func load_all() -> void:
 		building_textures_by_name["Factory"],
 		building_textures_by_name["Radar"]
 	]
-	level2_building_textures = [
+	level2_building_textures.clear()
+	var level2_candidates: Array[Texture2D] = [
+		building_textures_by_name["Factory1"],
+		building_textures_by_name["Bunker"],
+		building_textures_by_name["Factory"],
+		building_textures_by_name["Radar"],
 		_safe_load_tex(BUILDINGS_DIR + "FuelTanks.png"),
 		_safe_load_tex(BUILDINGS_DIR + "cannon.png"),
 		_safe_load_tex(BUILDINGS_DIR + "Factory2.png"),
 		_safe_load_tex(BUILDINGS_DIR + "Tank.png")
 	]
+	for texture in level2_candidates:
+		if texture != null:
+			level2_building_textures.append(texture)
 	spawn_area_defs = _load_spawn_areas(BACKGROUND_DIR + "spawn_areas.xml")
 	ship_textures = {
 		"player": load(SHIPS_DIR + "PlayerShip.png"),
@@ -74,11 +82,11 @@ func random_ground_tile() -> Texture2D:
 func random_building() -> Texture2D:
 	return building_textures.pick_random()
 
-func building_for_spawn_area(index: int) -> Texture2D:
+func building_for_spawn_area(_index: int) -> Texture2D:
 	var buildings := get_buildings_for_level()
 	if buildings.is_empty():
 		return null
-	return buildings[index % buildings.size()]
+	return buildings.pick_random()
 
 func get_buildings_for_level() -> Array[Texture2D]:
 	if GameState != null and GameState.current_level >= 2:

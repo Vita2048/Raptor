@@ -28,6 +28,9 @@ func _build_fixed_scenery() -> void:
 			var area = AssetDB.spawn_area_defs[area_index]
 			var scenery := scenery_pool.acquire() as Area2D
 			var texture := AssetDB.building_for_spawn_area(area_index)
+			if texture == null:
+				scenery_pool.release(scenery)
+				continue
 			var rect: Rect2 = area["rect"]
 			var rect_size := rect.size.abs() * image_scale
 			var fit_x: float = rect_size.x * 0.68 / texture.get_width()

@@ -7,7 +7,7 @@ signal boss_health_changed(health: int, max_health: int)
 signal game_over
 signal level_advanced(new_level: int)
 
-const BOSS_INTERVAL := 5000
+const BOSS_INTERVAL := 15000
 
 var score := 0
 var player_health := 100
