@@ -80,7 +80,8 @@ func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void
 		_spawn_energy_item(pos)
 
 func _on_boss_destroyed(pos: Vector2) -> void:
-	VFX.call_deferred("boss_explosion", pos)
+	var explosion_scale := 0.7
+	VFX.call_deferred("boss_explosion", pos, explosion_scale)
 	boss_spawned = false
 	GameState.end_boss()
 	if GameState.current_level < 2:
@@ -101,19 +102,20 @@ func _spawn_energy_item(pos: Vector2) -> void:
 
 func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
 	if large:
-		_spawn_boss_explosion(pos)
+		var explosion_scale := 0.7 if GameState.current_level >= 2 else 1.0
+		_spawn_boss_explosion(pos, explosion_scale)
 		return
 	_spawn_single_explosion(pos, false)
 
-func _spawn_single_explosion(pos: Vector2, large: bool = false) -> void:
+func _spawn_single_explosion(pos: Vector2, large: bool = false, scale_multiplier: float = 1.0) -> void:
 	var explosion := ExplosionScene.instantiate()
 	explosion.global_position = pos
-	explosion.configure(large)
+	explosion.configure(large, scale_multiplier)
 	get_parent().add_child(explosion)
 	explosion.burst()
 
-func _spawn_boss_explosion(pos: Vector2) -> void:
-	_spawn_single_explosion(pos, true)
+func _spawn_boss_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void:
+	_spawn_single_explosion(pos, true, scale_multiplier)
 	var offsets := [
 		Vector2(-160, -190),
 		Vector2(170, -160),
@@ -125,12 +127,12 @@ func _spawn_boss_explosion(pos: Vector2) -> void:
 		Vector2(0, 330)
 	]
 	for i in range(offsets.size()):
-		_spawn_delayed_boss_explosion(pos + offsets[i], 0.04 + i * 0.045)
+		_spawn_delayed_boss_explosion(pos + offsets[i] * scale_multiplier, 0.04 + i * 0.045, scale_multiplier)
 
-func _spawn_delayed_boss_explosion(pos: Vector2, delay: float) -> void:
+func _spawn_delayed_boss_explosion(pos: Vector2, delay: float, scale_multiplier: float = 1.0) -> void:
 	await get_tree().create_timer(delay).timeout
 	if is_instance_valid(self):
-		_spawn_single_explosion(pos, true)
+		_spawn_single_explosion(pos, true, scale_multiplier)
 
 func _spawn_initial_level2_wave() -> void:
 	for i in 3:

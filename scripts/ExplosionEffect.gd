@@ -14,9 +14,9 @@ func _ready() -> void:
 	z_index = 90
 	_build_layers()
 
-func configure(is_large: bool) -> void:
+func configure(is_large: bool, multiplier: float = 1.0) -> void:
 	large_scale = is_large
-	size_multiplier = 1.06 if is_large else 1.0
+	size_multiplier = (1.06 if is_large else 1.0) * multiplier
 
 func burst() -> void:
 	if large_scale:
@@ -78,10 +78,10 @@ func _play_boss_flash() -> void:
 	boss_flash_sprite.visible = true
 	boss_flash_sprite.texture = AssetDB.flash_textures.pick_random()
 	boss_flash_sprite.modulate = Color(1.0, 0.88, 0.45, 0.95)
-	boss_flash_sprite.scale = Vector2.ONE * 0.6
+	boss_flash_sprite.scale = Vector2.ONE * 0.6 * size_multiplier
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 1.18, 0.34).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 1.18 * size_multiplier, 0.34).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	tween.tween_property(boss_flash_sprite, "modulate:a", 0.0, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	await tween.finished
 	boss_flash_sprite.visible = false
@@ -110,7 +110,7 @@ func _emit_shockwave() -> void:
 			1,
 			0.4,
 			Vector2(cos(angle), sin(angle)),
-			randf_range(760.0, 1180.0) if large_scale else randf_range(650.0, 980.0),
+			(randf_range(760.0, 1180.0) if large_scale else randf_range(650.0, 980.0)) * size_multiplier,
 			420.0,
 			0.045,
 			0.115,
@@ -131,13 +131,13 @@ func _emit_smoke_delayed() -> void:
 			1,
 			randf_range(1.0, 1.5),
 			drift,
-			randf_range(145.0, 240.0) if large_scale else randf_range(105.0, 180.0),
+			(randf_range(145.0, 240.0) if large_scale else randf_range(105.0, 180.0)) * size_multiplier,
 			28.0,
 			0.055,
 			0.16,
 			Color(0.12, 0.12, 0.12, 0.72),
 			Color(0.05, 0.05, 0.05, 0.0),
-			Vector2(randf_range(-210.0, 210.0), randf_range(-190.0, 190.0)) if large_scale else Vector2(randf_range(-34.0, 34.0), randf_range(-18.0, 24.0))
+			(Vector2(randf_range(-210.0, 210.0), randf_range(-190.0, 190.0)) * size_multiplier) if large_scale else Vector2(randf_range(-34.0, 34.0), randf_range(-18.0, 24.0))
 		)
 		smoke_layer.add_child(emitter)
 		emitter.restart()
@@ -164,8 +164,8 @@ func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int,
 	material.damping_max = damping * 1.25
 	material.angular_velocity_min = -260.0
 	material.angular_velocity_max = 260.0
-	material.scale_min = scale_min * (1.08 if large_scale else 1.0)
-	material.scale_max = scale_max * (1.08 if large_scale else 1.0)
+	material.scale_min = scale_min * (1.08 if large_scale else 1.0) * size_multiplier
+	material.scale_max = scale_max * (1.08 if large_scale else 1.0) * size_multiplier
 	if layer_name == "BlackSmokeTrail":
 		material.gravity = Vector3(0.0, MAP_SCROLL_SPEED * 0.34, 0.0)
 	else:
