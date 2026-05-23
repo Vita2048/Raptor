@@ -1,6 +1,6 @@
 extends Node2D
 
-const ScrollingBackgroundScript := preload("res://scripts/ScrollingBackground.gd")
+const BackgroundGeneratorScript := preload("res://scripts/BackgroundGenerator.gd")
 const WorldSpawnerScript := preload("res://scripts/WorldSpawner.gd")
 const PlayerShipScript := preload("res://scripts/PlayerShip.gd")
 const EnemyManagerScript := preload("res://scripts/EnemyManager.gd")
@@ -21,9 +21,11 @@ func _ready() -> void:
 func _build_scene() -> void:
 	_add_world_environment()
 
-	background = ScrollingBackgroundScript.new()
-	background.name = "ParallaxBackground"
-	add_child(background)
+	background = get_node_or_null("ProceduralBackground") as Node2D
+	if background == null:
+		background = BackgroundGeneratorScript.new()
+		background.name = "ProceduralBackground"
+		add_child(background)
 
 	world_spawner = WorldSpawnerScript.new()
 	world_spawner.name = "WorldSpawner"
@@ -45,6 +47,7 @@ func _build_scene() -> void:
 	add_child(hud)
 
 	GameState.game_over.connect(_on_game_over)
+	GameState.level_advanced.connect(_on_level_advanced)
 
 func _on_game_over() -> void:
 	# Explode the player ship then hide it
@@ -71,6 +74,10 @@ func _on_game_over() -> void:
 			player.visible = false
 			player.set_deferred("monitoring", false)
 			player.set_deferred("monitorable", false)
+
+func _on_level_advanced(new_level: int) -> void:
+	if background != null and background.has_method("rebuild_for_level"):
+		background.call_deferred("rebuild_for_level", new_level)
 
 func _add_world_environment() -> void:
 	var world_environment := WorldEnvironment.new()

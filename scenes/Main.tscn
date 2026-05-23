@@ -1,6 +1,10 @@
 [gd_scene format=3 uid="uid://bd3hrj6hd0tx8"]
 
 [ext_resource type="Script" uid="uid://dtubgfal30fa3" path="res://scripts/Main.gd" id="1_main"]
+[ext_resource type="Script" path="res://scripts/BackgroundGenerator.gd" id="2_background"]
 
 [node name="Main" type="Node2D" unique_id=1353449177]
 script = ExtResource("1_main")
+
+[node name="ProceduralBackground" type="Node2D" parent="."]
+script = ExtResource("2_background")

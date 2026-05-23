@@ -13,7 +13,10 @@ var scenery_entries: Array[Dictionary] = []
 func _ready() -> void:
 	z_index = -20
 	scenery_pool = ObjectPool.new(_create_scenery, self, 12)
-	if AssetDB.bridge_texture != null:
+	var source_loop_height = scroll_source.get("loop_height") if scroll_source != null else null
+	if typeof(source_loop_height) == TYPE_FLOAT or typeof(source_loop_height) == TYPE_INT:
+		loop_height = float(source_loop_height)
+	elif AssetDB.bridge_texture != null:
 		image_scale = VIEW_SIZE.x / AssetDB.bridge_texture.get_width()
 		loop_height = AssetDB.bridge_texture.get_height() * image_scale
 	_build_fixed_scenery()
