@@ -4,6 +4,7 @@ const BACKGROUND_DIR := "res://assets/background/"
 const BUILDINGS_DIR := "res://assets/buildings/"
 const SHIPS_DIR := "res://assets/ships/"
 const PARTICLES_DIR := "res://assets/particles/"
+const ITEMS_DIR := "res://assets/items/"
 
 var background_textures: Array[Texture2D] = []
 var desert_textures: Array[Texture2D] = []
@@ -17,6 +18,8 @@ var flash_textures: Array[Texture2D] = []
 var explosion_textures: Array[Texture2D] = []
 var white_puff_textures: Array[Texture2D] = []
 var black_smoke_textures: Array[Texture2D] = []
+var bomb_texture: Texture2D
+var level2_building_textures: Array[Texture2D] = []
 
 func _ready() -> void:
 	load_all()
@@ -38,14 +41,25 @@ func load_all() -> void:
 		building_textures_by_name["Factory"],
 		building_textures_by_name["Radar"]
 	]
+	level2_building_textures = [
+		_safe_load_tex(BUILDINGS_DIR + "FuelTanks.png"),
+		_safe_load_tex(BUILDINGS_DIR + "cannon.png"),
+		_safe_load_tex(BUILDINGS_DIR + "Factory2.png"),
+		_safe_load_tex(BUILDINGS_DIR + "Tank.png")
+	]
 	spawn_area_defs = _load_spawn_areas(BACKGROUND_DIR + "spawn_areas.xml")
 	ship_textures = {
 		"player": load(SHIPS_DIR + "PlayerShip.png"),
 		"interceptor": load(SHIPS_DIR + "EnemyInterceptor.png"),
 		"interceptor1": load(SHIPS_DIR + "EnemyInterceptor1.png"),
 		"bomber": load(SHIPS_DIR + "Bomber.png"),
-		"boss": load(SHIPS_DIR + "BossShip.png")
+		"boss": load(SHIPS_DIR + "BossShip.png"),
+		"enemy4": _safe_load_tex(SHIPS_DIR + "Enemy4.png"),
+		"enemy5": _safe_load_tex(SHIPS_DIR + "Enemy5.png"),
+		"enemy6": _safe_load_tex(SHIPS_DIR + "Enemy6.png"),
+		"boss2": _safe_load_tex(SHIPS_DIR + "Bosship2.png")
 	}
+	bomb_texture = _safe_load_tex(ITEMS_DIR + "Bomb.png")
 	black_smoke_textures = _load_zero_series(PARTICLES_DIR, "blackSmoke", 0, 24)
 	explosion_textures = _load_zero_series(PARTICLES_DIR, "explosion", 0, 8)
 	flash_textures = _load_zero_series(PARTICLES_DIR, "flash", 0, 8)
@@ -61,9 +75,26 @@ func random_building() -> Texture2D:
 	return building_textures.pick_random()
 
 func building_for_spawn_area(index: int) -> Texture2D:
-	if building_textures.is_empty():
+	var buildings := get_buildings_for_level()
+	if buildings.is_empty():
 		return null
-	return building_textures[index % building_textures.size()]
+	return buildings[index % buildings.size()]
+
+func get_buildings_for_level() -> Array[Texture2D]:
+	if GameState != null and GameState.current_level >= 2:
+		return level2_building_textures
+	return building_textures
+
+func switch_to_level(level: int) -> void:
+	if level >= 2:
+		building_textures = level2_building_textures
+	else:
+		building_textures = [
+			building_textures_by_name.get("Factory1"),
+			building_textures_by_name.get("Bunker"),
+			building_textures_by_name.get("Factory"),
+			building_textures_by_name.get("Radar")
+		].filter(func(t): return t != null)
 
 func random_particle(kind: String) -> Texture2D:
 	match kind:
@@ -141,3 +172,16 @@ func _points_to_rect(points: Array[Vector2]) -> Rect2:
 		max_pos.x = max(max_pos.x, point.x)
 		max_pos.y = max(max_pos.y, point.y)
 	return Rect2(min_pos, max_pos - min_pos)
+
+func _safe_load_tex(path: String) -> Texture2D:
+	var res := load(path)
+	if res != null:
+		return res
+	# Fallback for unimported PNGs: load raw and make ImageTexture
+	var img := Image.new()
+	if img.load(path) == OK:
+		var tex := ImageTexture.new()
+		tex.set_image(img)
+		return tex
+	push_warning("Failed to load texture at " + path)
+	return null

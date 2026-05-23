@@ -63,3 +63,12 @@ func _create_scenery() -> Area2D:
 	var scenery := SceneryObjectScript.new()
 	scenery.name = "PooledScenery"
 	return scenery
+
+func rebuild_for_level(new_level: int) -> void:
+	for entry in scenery_entries:
+		var sc := entry["scenery"] as Area2D
+		if is_instance_valid(sc):
+			scenery_pool.release(sc)
+	scenery_entries.clear()
+	AssetDB.switch_to_level(new_level)
+	_build_fixed_scenery()

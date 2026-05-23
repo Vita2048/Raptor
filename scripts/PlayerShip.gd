@@ -114,11 +114,23 @@ func _play_toggle_flash() -> void:
 	flash.queue_free()
 
 func _shoot() -> void:
-	for offset in muzzle_offsets:
-		var muzzle_pos: Vector2 = to_global(offset)
-		VFX.muzzle_flash(muzzle_pos, Vector2.UP, true)
-		var bullet := bullet_pool.acquire() as Area2D
-		bullet.launch(muzzle_pos, Vector2.UP, 1120.0, 18, true)
+	var lvl := GameState.current_level
+	if lvl >= 2:
+		# Level 2: triple spread shot, slightly slower but wider coverage
+		var offsets: Array[Vector2] = [Vector2(-38, -100), Vector2(0, -112), Vector2(38, -100)]
+		for i in range(3):
+			var off: Vector2 = offsets[i]
+			var muzzle_pos: Vector2 = to_global(off)
+			VFX.muzzle_flash(muzzle_pos, Vector2.UP, true)
+			var dir := Vector2((i - 1) * 0.26, -1.0).normalized()
+			var bullet := bullet_pool.acquire() as Area2D
+			bullet.launch(muzzle_pos, dir, 980.0, 16, true)
+	else:
+		for offset in muzzle_offsets:
+			var muzzle_pos: Vector2 = to_global(offset)
+			VFX.muzzle_flash(muzzle_pos, Vector2.UP, true)
+			var bullet := bullet_pool.acquire() as Area2D
+			bullet.launch(muzzle_pos, Vector2.UP, 1120.0, 18, true)
 
 func _create_bullet() -> Area2D:
 	var bullet := ProjectileScript.new()
