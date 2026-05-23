@@ -75,9 +75,10 @@ func _on_enemy_request_fire(origin: Vector2, directions: Array, speed: float, da
 
 func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void:
 	GameState.add_score(score_value)
-	_spawn_explosion(pos, was_boss)
-	if not was_boss and randf() < 0.20:
-		_spawn_energy_item(pos)
+	if not was_boss:
+		_spawn_explosion(pos)
+		if randf() < 0.20:
+			_spawn_energy_item(pos)
 
 func _on_boss_destroyed(pos: Vector2) -> void:
 	var explosion_scale := 0.7
@@ -100,39 +101,15 @@ func _spawn_energy_item(pos: Vector2) -> void:
 	item.global_position = pos
 	get_parent().add_child(item)
 
-func _spawn_explosion(pos: Vector2, large: bool = false) -> void:
-	if large:
-		var explosion_scale := 0.7 if GameState.current_level >= 2 else 1.0
-		_spawn_boss_explosion(pos, explosion_scale)
-		return
-	_spawn_single_explosion(pos, false)
+func _spawn_explosion(pos: Vector2) -> void:
+	_spawn_single_explosion(pos)
 
-func _spawn_single_explosion(pos: Vector2, large: bool = false, scale_multiplier: float = 1.0) -> void:
+func _spawn_single_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void:
 	var explosion := ExplosionScene.instantiate()
 	explosion.global_position = pos
-	explosion.configure(large, scale_multiplier)
+	explosion.configure(false, scale_multiplier)
 	get_parent().add_child(explosion)
 	explosion.burst()
-
-func _spawn_boss_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void:
-	_spawn_single_explosion(pos, true, scale_multiplier)
-	var offsets := [
-		Vector2(-160, -190),
-		Vector2(170, -160),
-		Vector2(-250, 20),
-		Vector2(250, 35),
-		Vector2(-115, 205),
-		Vector2(130, 230),
-		Vector2(0, -310),
-		Vector2(0, 330)
-	]
-	for i in range(offsets.size()):
-		_spawn_delayed_boss_explosion(pos + offsets[i] * scale_multiplier, 0.04 + i * 0.045, scale_multiplier)
-
-func _spawn_delayed_boss_explosion(pos: Vector2, delay: float, scale_multiplier: float = 1.0) -> void:
-	await get_tree().create_timer(delay).timeout
-	if is_instance_valid(self):
-		_spawn_single_explosion(pos, true, scale_multiplier)
 
 func _spawn_initial_level2_wave() -> void:
 	for i in 3:
@@ -150,7 +127,7 @@ func _spawn_bomb() -> void:
 func _on_bomb_destroyed(pos: Vector2, by_shot: bool) -> void:
 	if by_shot:
 		GameState.add_score(130)
-	_spawn_single_explosion(pos, false)
+	_spawn_single_explosion(pos)
 
 func _on_game_over() -> void:
 	enemy_pool.release_all()

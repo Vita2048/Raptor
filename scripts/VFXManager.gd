@@ -32,9 +32,7 @@ func boss_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void:
 		Vector2(-320, -25),
 		Vector2(320, 20),
 		Vector2(-175, 245),
-		Vector2(185, 275),
-		Vector2(0, -390),
-		Vector2(0, 400)
+		Vector2(185, 275)
 	]
 	for i in range(offsets.size()):
 		_spawn_large_explosion_delayed(pos + offsets[i] * scale_multiplier, 0.035 + i * 0.04, scale_multiplier)

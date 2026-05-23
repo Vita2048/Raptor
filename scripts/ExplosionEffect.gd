@@ -101,7 +101,7 @@ func _play_fireball() -> void:
 	fireball_sprite.visible = false
 
 func _emit_shockwave() -> void:
-	var count := randi_range(24, 34) if large_scale else randi_range(10, 15)
+	var count := randi_range(12, 18) if large_scale else randi_range(10, 15)
 	for i in range(count):
 		var angle := randf_range(0.0, TAU)
 		var emitter := _make_particle_emitter(
@@ -122,7 +122,7 @@ func _emit_shockwave() -> void:
 
 func _emit_smoke_delayed() -> void:
 	await get_tree().create_timer(0.1).timeout
-	var count := randi_range(32, 44) if large_scale else randi_range(15, 20)
+	var count := randi_range(16, 22) if large_scale else randi_range(15, 20)
 	for i in range(count):
 		var drift := Vector2(randf_range(-0.35, 0.35), -1.0).normalized()
 		var emitter := _make_particle_emitter(

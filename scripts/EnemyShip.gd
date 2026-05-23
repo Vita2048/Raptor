@@ -198,7 +198,7 @@ func _fire_pattern() -> void:
 			# so the player has a place to dodge and hide between the volleys
 			for angle in [-82.0, -62.0, -42.0, -25.0, -15.0, 15.0, 25.0, 42.0, 62.0, 82.0]:
 				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
-			origin = global_position + Vector2(0, 270)
+			origin = global_position + Vector2(0, 160)
 			speed = 580.0
 			dmg = 17
 			VFX.muzzle_flash(origin, Vector2.DOWN, false)
