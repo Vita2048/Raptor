@@ -20,6 +20,8 @@ var white_puff_textures: Array[Texture2D] = []
 var black_smoke_textures: Array[Texture2D] = []
 var bomb_texture: Texture2D
 var level2_building_textures: Array[Texture2D] = []
+var tank_texture: Texture2D
+var radar_texture: Texture2D
 
 func _ready() -> void:
 	load_all()
@@ -35,6 +37,7 @@ func load_all() -> void:
 		"Factory1": load(BUILDINGS_DIR + "Factory1.png"),
 		"Radar": load(BUILDINGS_DIR + "Radar.png")
 	}
+	radar_texture = building_textures_by_name["Radar"]
 	building_textures = [
 		building_textures_by_name["Factory1"],
 		building_textures_by_name["Bunker"],
@@ -55,7 +58,13 @@ func load_all() -> void:
 	for texture in level2_candidates:
 		if texture != null:
 			level2_building_textures.append(texture)
-	spawn_area_defs = _load_spawn_areas(BACKGROUND_DIR + "spawn_areas.xml")
+	tank_texture = _safe_load_tex(BUILDINGS_DIR + "Tank.png")
+	spawn_area_defs = [
+		{"name":"area0","points":[],"is_rect":true,"rect":Rect2(162.6070294565517,106.39642649153944,131.8962345808075,241.29853768271758)},
+		{"name":"area1","points":[],"is_rect":true,"rect":Rect2(728.0226707215638,156.4965466036291,107.35740024019215,202.4453833100766)},
+		{"name":"area2","points":[],"is_rect":true,"rect":Rect2(204.52753812176957,630.9140105221925,112.46965739448702,204.49028617179457)},
+		{"name":"area3","points":[],"is_rect":true,"rect":Rect2(730.0675735832815,679.9916792034232,112.46965739448702,184.0412575546151)}
+	]
 	ship_textures = {
 		"player": load(SHIPS_DIR + "PlayerShip.png"),
 		"interceptor": load(SHIPS_DIR + "EnemyInterceptor.png"),

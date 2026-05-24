@@ -23,19 +23,24 @@ func _process(delta: float) -> void:
 
 func _build_fixed_scenery() -> void:
 	scenery_entries.clear()
+	var num_areas := AssetDB.spawn_area_defs.size()
+	var area_textures: Array[Texture2D] = []
+	for i in range(num_areas):
+		area_textures.append(AssetDB.building_for_spawn_area(i))
 	for copy_index in range(2):
-		for area_index in range(AssetDB.spawn_area_defs.size()):
+		for area_index in range(num_areas):
+			var texture := area_textures[area_index]
+			if texture == null:
+				continue
 			var area = AssetDB.spawn_area_defs[area_index]
 			var scenery := scenery_pool.acquire() as Area2D
-			var texture := AssetDB.building_for_spawn_area(area_index)
-			if texture == null:
-				scenery_pool.release(scenery)
-				continue
 			var rect: Rect2 = area["rect"]
 			var rect_size := rect.size.abs() * image_scale
 			var fit_x: float = rect_size.x * 0.68 / texture.get_width()
 			var fit_y: float = rect_size.y * 0.68 / texture.get_height()
 			var scale_value: float = clamp(min(fit_x, fit_y), 0.32, 0.92)
+			if texture == AssetDB.tank_texture or texture == AssetDB.radar_texture:
+				scale_value *= 0.5
 			scenery.set_texture(texture)
 			scenery.set_visual_scale(Vector2.ONE * scale_value)
 			scenery.rotation_degrees = 0.0
