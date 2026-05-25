@@ -25,8 +25,10 @@ func _build_fixed_scenery() -> void:
 	scenery_entries.clear()
 	var num_areas := AssetDB.spawn_area_defs.size()
 	var area_textures: Array[Texture2D] = []
-	for i in range(num_areas):
-		area_textures.append(AssetDB.building_for_spawn_area(i))
+	for area_index in range(num_areas):
+		var area = AssetDB.spawn_area_defs[area_index]
+		var rect: Rect2 = area["rect"]
+		area_textures.append(_pick_suitable_building_for_rect(rect))
 	for copy_index in range(2):
 		for area_index in range(num_areas):
 			var texture := area_textures[area_index]
@@ -71,6 +73,27 @@ func _create_scenery() -> Area2D:
 	var scenery := SceneryObjectScript.new()
 	scenery.name = "PooledScenery"
 	return scenery
+
+func _pick_suitable_building_for_rect(rect: Rect2) -> Texture2D:
+	var candidates := AssetDB.get_buildings_for_level()
+	if candidates.is_empty():
+		return null
+	var rect_size := rect.size.abs() * image_scale
+	var suitable: Array[Texture2D] = []
+	for tex in candidates:
+		if tex == null:
+			continue
+		var fw: float = rect_size.x * 0.68 / tex.get_width()
+		var fh: float = rect_size.y * 0.68 / tex.get_height()
+		var sc: float = min(fw, fh)
+		if tex == AssetDB.tank_texture or tex == AssetDB.radar_texture:
+			sc *= 0.5
+		sc = clamp(sc, 0.32, 0.92)
+		if sc >= 0.33 or suitable.is_empty():
+			suitable.append(tex)
+	if suitable.is_empty():
+		suitable = candidates
+	return suitable.pick_random()
 
 func rebuild_for_level(new_level: int) -> void:
 	for entry in scenery_entries:
