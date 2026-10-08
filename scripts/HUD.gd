@@ -20,6 +20,7 @@ var root: Control
 var approach_panel: Panel
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
 	GameState.score_changed.connect(_on_score_changed)
 	GameState.player_health_changed.connect(_on_player_health_changed)
@@ -27,6 +28,12 @@ func _ready() -> void:
 	GameState.boss_health_changed.connect(_on_boss_health_changed)
 	GameState.game_over.connect(_on_game_over)
 	GameState.level_advanced.connect(_on_level_advanced)
+	if VFX != null and VFX.get("audio") != null:
+		var audio: Node = VFX.get("audio")
+		if audio.has_signal("muted_changed") and not audio.muted_changed.is_connected(_on_audio_muted_changed):
+			audio.muted_changed.connect(_on_audio_muted_changed)
+		if audio.has_signal("volume_changed") and not audio.volume_changed.is_connected(_on_audio_volume_changed):
+			audio.volume_changed.connect(_on_audio_volume_changed)
 	_on_score_changed(GameState.score)
 	_on_player_health_changed(GameState.player_health, GameState.player_max_health)
 	_on_level_advanced(GameState.current_level)
@@ -112,7 +119,6 @@ func _build_ui() -> void:
 	_update_sound_label()
 	sound_button.pressed.connect(func():
 		VFX.audio.set_muted(not VFX.audio.muted)
-		_update_sound_label()
 	)
 
 	game_over_overlay = Control.new()
@@ -135,7 +141,21 @@ func _build_ui() -> void:
 	game_over_overlay.hide()
 
 func _update_sound_label() -> void:
-	sound_button.text = "SOUND  OFF" if VFX.audio.muted else "SOUND  ON"
+	if VFX == null or VFX.get("audio") == null or sound_button == null:
+		return
+	var audio: Node = VFX.get("audio")
+	var is_muted := bool(audio.get("muted"))
+	var vol := float(audio.get("volume"))
+	if is_muted or vol <= 0.001:
+		sound_button.text = "SOUND  OFF"
+	else:
+		sound_button.text = "SOUND  %d%%" % int(round(vol * 100.0))
+
+func _on_audio_muted_changed(_is_muted: bool) -> void:
+	_update_sound_label()
+
+func _on_audio_volume_changed(_volume: float) -> void:
+	_update_sound_label()
 
 func _on_score_changed(score: int) -> void:
 	score_label.text = "%07d" % score

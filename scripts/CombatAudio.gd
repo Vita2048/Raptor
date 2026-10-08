@@ -1,29 +1,61 @@
 extends Node
 
+signal volume_changed(volume: float)
+signal muted_changed(is_muted: bool)
+
 const RATE := 22050
+const SETTINGS_PATH := "user://settings.cfg"
 var sounds: Dictionary = {}
 var voices: Array[AudioStreamPlayer] = []
 var last_played: Dictionary = {}
 var muted := false
+var volume := 0.8
 var random := RandomNumberGenerator.new()
 
 func _ready() -> void:
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	random.seed = 73519
 	for kind in ["shot", "enemy", "impact", "explosion", "heavy", "damage", "alert", "charge"]:
 		sounds[kind] = _synthesize(kind)
 	for i in range(12):
 		var voice := AudioStreamPlayer.new()
+		voice.process_mode = Node.PROCESS_MODE_ALWAYS
 		add_child(voice)
 		voices.append(voice)
+	_load_settings()
 
 func set_muted(value: bool) -> void:
+	if muted == value:
+		return
 	muted = value
 	if muted:
 		for voice in voices:
 			voice.stop()
+	muted_changed.emit(muted)
+	_save_settings()
+
+func toggle_muted() -> void:
+	set_muted(not muted)
+
+func set_volume(value: float) -> void:
+	var clamped := clampf(value, 0.0, 1.0)
+	if is_equal_approx(volume, clamped):
+		return
+	volume = clamped
+	# Unmute automatically when user raises volume from 0 via slider.
+	if volume > 0.001 and muted:
+		muted = false
+		muted_changed.emit(muted)
+	volume_changed.emit(volume)
+	_save_settings()
+
+func get_volume_db(base_db: float) -> float:
+	if muted or volume <= 0.001:
+		return -80.0
+	return base_db + linear_to_db(maxf(volume, 0.001))
 
 func play_sound(kind: String) -> void:
-	if muted or not sounds.has(kind):
+	if muted or volume <= 0.001 or not sounds.has(kind):
 		return
 	var now := Time.get_ticks_msec()
 	var gap := 180 if kind in ["heavy", "damage"] else 65
@@ -33,10 +65,42 @@ func play_sound(kind: String) -> void:
 	for voice in voices:
 		if not voice.playing:
 			voice.stream = sounds[kind]
-			voice.volume_db = -15.0 if kind in ["shot", "enemy", "impact"] else -10.0
+			var base_db := -15.0 if kind in ["shot", "enemy", "impact"] else -10.0
+			voice.volume_db = get_volume_db(base_db)
 			voice.pitch_scale = random.randf_range(0.94, 1.06)
 			voice.play()
 			return
+
+func play_preview() -> void:
+	# Bypasses throttle so volume slider feedback is instant (works while paused).
+	if muted or volume <= 0.001 or not sounds.has("explosion"):
+		return
+	for voice in voices:
+		if not voice.playing:
+			voice.stream = sounds["explosion"]
+			voice.volume_db = get_volume_db(-10.0)
+			voice.pitch_scale = 1.0
+			voice.play()
+			return
+	# All busy: steal first voice for preview.
+	var fallback: AudioStreamPlayer = voices[0]
+	fallback.stream = sounds["explosion"]
+	fallback.volume_db = get_volume_db(-10.0)
+	fallback.pitch_scale = 1.0
+	fallback.play()
+
+func _save_settings() -> void:
+	var cfg := ConfigFile.new()
+	cfg.set_value("audio", "volume", volume)
+	cfg.set_value("audio", "muted", muted)
+	cfg.save(SETTINGS_PATH)
+
+func _load_settings() -> void:
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) != OK:
+		return
+	volume = clampf(float(cfg.get_value("audio", "volume", volume)), 0.0, 1.0)
+	muted = bool(cfg.get_value("audio", "muted", muted))
 
 # Original, deterministic PCM effects, generated once and reused by a bounded voice pool.
 func _synthesize(kind: String) -> AudioStreamWAV:
