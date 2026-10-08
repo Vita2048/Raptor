@@ -5,6 +5,7 @@
 # Build artifacts
 *.apk
 *.idsig
+/build/
 
 # Local presentation verification outputs
 /artifacts/
