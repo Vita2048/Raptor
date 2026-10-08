@@ -7,6 +7,7 @@ var sprites: Array[Sprite2D] = []
 var scroll_offset := 0.0
 var image_scale := 1.0
 var loop_height := 1.0
+var distance := 0.0
 
 func _ready() -> void:
 	z_index = -100
@@ -21,13 +22,15 @@ func _ready() -> void:
 		sprite.scale = Vector2(image_scale * 1.012, image_scale)
 		var grade := ShaderMaterial.new()
 		grade.shader = preload("res://shaders/terrain.gdshader")
+		grade.set_shader_parameter("animate_water", true)
 		sprite.material = grade
 		add_child(sprite)
 		sprites.append(sprite)
 	_update_sprite_positions()
 
 func _process(delta: float) -> void:
-	scroll_offset = fposmod(scroll_offset + SCROLL_SPEED * delta, loop_height)
+	distance += SCROLL_SPEED * delta
+	scroll_offset = fposmod(distance, loop_height)
 	_update_sprite_positions()
 
 func _update_sprite_positions() -> void:

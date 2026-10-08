@@ -17,6 +17,7 @@ var result_label: Label
 var play_again_button: Button
 var sound_button: Button
 var root: Control
+var approach_panel: Panel
 
 func _ready() -> void:
 	_build_ui()
@@ -157,6 +158,8 @@ func _on_level_advanced(level: int) -> void:
 	level_label.text = "SECTOR  %02d" % level
 
 func _on_game_over() -> void:
+	if is_instance_valid(approach_panel):
+		approach_panel.queue_free()
 	boss_panel.hide()
 	result_label.text = "SECTOR %02d     /     SCORE %07d" % [GameState.current_level, GameState.score]
 	game_over_overlay.show()
@@ -174,3 +177,18 @@ func show_level_transition(from_level: int, to_level: int) -> void:
 	tween.tween_interval(2.0)
 	tween.tween_property(panel, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(panel.queue_free)
+
+func show_boss_warning() -> void:
+	if is_instance_valid(approach_panel):
+		approach_panel.queue_free()
+	approach_panel = _panel(root, Vector2(660, 160), Vector2(600, 104))
+	var title := _label(approach_panel, Vector2(24, 16), Vector2(552, 32), "HEAVY CONTACT INBOUND", 25, AMBER)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var detail := _label(approach_panel, Vector2(24, 57), Vector2(552, 25), "CLEAR THE APPROACH  /  PREPARE TO ENGAGE", 16, MUTED)
+	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	approach_panel.modulate.a = 0.0
+	var tween := approach_panel.create_tween()
+	tween.tween_property(approach_panel, "modulate:a", 1.0, 0.22)
+	tween.tween_interval(2.2)
+	tween.tween_property(approach_panel, "modulate:a", 0.0, 0.4)
+	tween.tween_callback(approach_panel.queue_free)

@@ -36,6 +36,16 @@ func _build_scene() -> void:
 	world_spawner.name = "WorldSpawner"
 	world_spawner.scroll_source = background
 	add_child(world_spawner)
+	var atmosphere := ColorRect.new()
+	atmosphere.name = "GroundAtmosphere"
+	atmosphere.position = Vector2(-12, -12)
+	atmosphere.size = Vector2(1944, 1104)
+	atmosphere.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	atmosphere.z_index = -5
+	var atmosphere_material := ShaderMaterial.new()
+	atmosphere_material.shader = preload("res://shaders/atmosphere.gdshader")
+	atmosphere.material = atmosphere_material
+	add_child(atmosphere)
 
 	player = PlayerShipScript.new()
 	player.name = "PlayerShip"

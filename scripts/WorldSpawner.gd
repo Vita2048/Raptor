@@ -3,103 +3,69 @@ extends Node2D
 const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const SceneryObjectScript := preload("res://scripts/SceneryObject.gd")
 const VIEW_SIZE := Vector2(1920, 1080)
+const WRAP_MARGIN := 360.0
 
 var scenery_pool: ObjectPool
 var scroll_source: Node
 var image_scale := 1.0
 var loop_height := 1.0
 var scenery_entries: Array[Dictionary] = []
+var random := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	z_index = -20
-	scenery_pool = ObjectPool.new(_create_scenery, self, 12)
-	if AssetDB.bridge_texture != null:
-		image_scale = VIEW_SIZE.x / AssetDB.bridge_texture.get_width()
-		loop_height = AssetDB.bridge_texture.get_height() * image_scale
+	random.randomize()
+	scenery_pool = ObjectPool.new(_create_scenery, self, 8)
+	image_scale = VIEW_SIZE.x / AssetDB.bridge_texture.get_width()
+	loop_height = AssetDB.bridge_texture.get_height() * image_scale
 	_build_fixed_scenery()
 
-func _process(delta: float) -> void:
+func _process(_delta: float) -> void:
 	_update_fixed_scenery()
 
 func _build_fixed_scenery() -> void:
-	scenery_entries.clear()
-	var num_areas := AssetDB.spawn_area_defs.size()
-	var area_textures: Array[Texture2D] = []
-	for area_index in range(num_areas):
-		var area = AssetDB.spawn_area_defs[area_index]
+	for area in AssetDB.spawn_area_defs:
 		var rect: Rect2 = area["rect"]
-		area_textures.append(_pick_suitable_building_for_rect(rect))
-	for copy_index in range(2):
-		for area_index in range(num_areas):
-			var texture := area_textures[area_index]
-			if texture == null:
-				continue
-			var area = AssetDB.spawn_area_defs[area_index]
-			var scenery := scenery_pool.acquire() as Area2D
-			var rect: Rect2 = area["rect"]
-			var rect_size := rect.size.abs() * image_scale
-			var fit_x: float = rect_size.x * 0.68 / texture.get_width()
-			var fit_y: float = rect_size.y * 0.68 / texture.get_height()
-			var scale_value: float = clamp(min(fit_x, fit_y), 0.32, 0.92)
-			if texture == AssetDB.tank_texture or texture == AssetDB.radar_texture:
-				scale_value *= 0.5
-			scenery.set_texture(texture)
-			scenery.set_visual_scale(Vector2.ONE * scale_value)
-			scenery.rotation_degrees = 0.0
-			scenery.modulate = Color.WHITE
-			scenery_entries.append({
-				"scenery": scenery,
-				"copy_index": copy_index,
-				"local_pos": (rect.position + rect.size * 0.5) * image_scale
-			})
+		var scenery := scenery_pool.acquire() as Area2D
+		var entry := {"scenery": scenery, "rect": rect,
+			"local_pos": rect.get_center() * image_scale, "cycle": -1}
+		scenery_entries.append(entry)
 	_update_fixed_scenery()
 
-func _update_fixed_scenery() -> void:
-	var scroll_offset := _current_scroll_offset()
-	for entry in scenery_entries:
-		var scenery := entry["scenery"] as Area2D
-		var copy_index := entry["copy_index"] as int
-		var local_pos := entry["local_pos"] as Vector2
-		var top_y := scroll_offset - loop_height + copy_index * loop_height
-		scenery.position = Vector2(local_pos.x, top_y + local_pos.y)
-		scenery.visible = scenery.position.y > -360.0 and scenery.position.y < VIEW_SIZE.y + 360.0
+func _dress_area(entry: Dictionary) -> void:
+	var scenery = entry["scenery"]
+	var candidates := AssetDB.get_buildings_for_level().duplicate()
+	if candidates.size() > 1:
+		candidates.erase(scenery.sprite.texture)
+	var texture: Texture2D = candidates[random.randi_range(0, candidates.size() - 1)]
+	var rect: Rect2 = entry["rect"]
+	var available := rect.size.abs() * image_scale
+	# Fit the full alpha bounds; never force small areas up to a minimum scale.
+	var visual_scale := minf(available.x * 0.76 / texture.get_width(), available.y * 0.76 / texture.get_height())
+	scenery.set_texture(texture)
+	scenery.set_visual_scale(Vector2.ONE * visual_scale)
+	scenery.rotation = 0.0
 
-func _current_scroll_offset() -> float:
-	if scroll_source != null:
-		return scroll_source.scroll_offset
-	return 0.0
+func _update_fixed_scenery() -> void:
+	var distance: float = scroll_source.distance if scroll_source != null else 0.0
+	for entry in scenery_entries:
+		var scenery = entry["scenery"]
+		var local_pos: Vector2 = entry["local_pos"]
+		var unwrapped := local_pos.y + distance + WRAP_MARGIN
+		var cycle := floori(unwrapped / loop_height)
+		if cycle != entry["cycle"]:
+			_dress_area(entry)
+			entry["cycle"] = cycle
+		var y := fposmod(unwrapped, loop_height) - WRAP_MARGIN
+		scenery.position = Vector2(local_pos.x, y)
+		scenery.visible = y > -WRAP_MARGIN and y < VIEW_SIZE.y + WRAP_MARGIN
 
 func _create_scenery() -> Area2D:
-	var scenery := SceneryObjectScript.new()
-	scenery.name = "PooledScenery"
-	return scenery
-
-func _pick_suitable_building_for_rect(rect: Rect2) -> Texture2D:
-	var candidates := AssetDB.get_buildings_for_level()
-	if candidates.is_empty():
-		return null
-	var rect_size := rect.size.abs() * image_scale
-	var suitable: Array[Texture2D] = []
-	for tex in candidates:
-		if tex == null:
-			continue
-		var fw: float = rect_size.x * 0.68 / tex.get_width()
-		var fh: float = rect_size.y * 0.68 / tex.get_height()
-		var sc: float = min(fw, fh)
-		if tex == AssetDB.tank_texture or tex == AssetDB.radar_texture:
-			sc *= 0.5
-		sc = clamp(sc, 0.32, 0.92)
-		if sc >= 0.33 or suitable.is_empty():
-			suitable.append(tex)
-	if suitable.is_empty():
-		suitable = candidates
-	return suitable.pick_random()
+	return SceneryObjectScript.new()
 
 func rebuild_for_level(new_level: int) -> void:
 	for entry in scenery_entries:
-		var sc := entry["scenery"] as Area2D
-		if is_instance_valid(sc):
-			scenery_pool.release(sc)
+		scenery_pool.release(entry["scenery"])
 	scenery_entries.clear()
 	AssetDB.switch_to_level(new_level)
 	_build_fixed_scenery()

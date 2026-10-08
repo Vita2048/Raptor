@@ -13,6 +13,7 @@ var enemy_bullet_pool: ObjectPool
 var spawn_timer := 0.0
 var spawn_interval := 1.15
 var boss_spawned := false
+var boss_pending := false
 var bomb_spawn_timer := 14.0
 
 func _ready() -> void:
@@ -21,9 +22,11 @@ func _ready() -> void:
 	GameState.game_over.connect(_on_game_over)
 
 func _process(delta: float) -> void:
+	if not GameState.game_active or boss_pending:
+		return
 	if GameState.should_start_boss():
 		_spawn_boss()
-	if boss_spawned:
+	if boss_spawned or boss_pending:
 		return
 	spawn_timer -= delta
 	if spawn_timer <= 0.0:
@@ -49,11 +52,24 @@ func _spawn_wave() -> void:
 		enemy.spawn(kind, Vector2(start_x + (i - count * 0.5) * 150.0, -120.0 - i * 70.0))
 
 func _spawn_boss() -> void:
-	boss_spawned = true
+	boss_pending = true
 	enemy_pool.release_all()
+	enemy_bullet_pool.release_all()
+	get_tree().call_group("bombs", "queue_free")
+	var hud := get_parent().get_node_or_null("HUD")
+	if hud:
+		hud.show_boss_warning()
+	VFX.audio.play_sound("alert")
+	await get_tree().create_timer(1.6).timeout
+	if not GameState.game_active:
+		boss_pending = false
+		return
+	boss_spawned = true
+	boss_pending = false
 	var boss := enemy_pool.acquire() as Area2D
 	var bkind := "boss2" if GameState.current_level >= 2 else "boss"
-	boss.spawn(bkind, Vector2(960, -180))
+	boss.spawn(bkind, Vector2(960, -430))
+	boss.begin_entrance()
 	GameState.begin_boss(boss.max_health)
 
 func _create_enemy() -> Area2D:
@@ -130,6 +146,7 @@ func _on_bomb_destroyed(pos: Vector2, by_shot: bool) -> void:
 	_spawn_single_explosion(pos)
 
 func _on_game_over() -> void:
+	boss_pending = false
 	enemy_pool.release_all()
 	enemy_bullet_pool.release_all()
 	get_parent().get_tree().call_group("bombs", "queue_free")

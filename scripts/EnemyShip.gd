@@ -25,6 +25,11 @@ var collision_shape: CollisionShape2D
 var silhouette_collision_polygons: Array[CollisionPolygon2D] = []
 var is_boss := false
 var is_dead := false
+var entrance_remaining := 0.0
+var charge_remaining := -1.0
+var charge_visual: Node2D
+const ENTRANCE_TIME := 2.4
+const CHARGE_TIME := 0.55
 var exhaust_plumes: Array[Node2D] = []
 
 func _ready() -> void:
@@ -35,6 +40,10 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	sprite = Sprite2D.new()
 	add_child(sprite)
+	charge_visual = Node2D.new()
+	charge_visual.z_index = 5
+	charge_visual.draw.connect(_draw_charge)
+	add_child(charge_visual)
 	var shadow := preload("res://scripts/AircraftShadow.gd").new()
 	shadow.source = sprite
 	add_child(shadow)
@@ -54,6 +63,9 @@ func spawn(kind: String, start_position: Vector2) -> void:
 	enemy_type = kind
 	is_boss = kind == "boss" or kind == "boss2"
 	is_dead = false
+	entrance_remaining = 0.0
+	charge_remaining = -1.0
+	charge_visual.queue_redraw()
 	hit_strength = 0.0
 	hit_material.set_shader_parameter("hit_amount", 0.0)
 	global_position = start_position
@@ -186,6 +198,15 @@ func spawn(kind: String, start_position: Vector2) -> void:
 func _physics_process(delta: float) -> void:
 	hit_strength = move_toward(hit_strength, 0.0, delta * 9.0)
 	hit_material.set_shader_parameter("hit_amount", hit_strength)
+	if entrance_remaining > 0.0:
+		entrance_remaining = maxf(entrance_remaining - delta, 0.0)
+		var progress := 1.0 - entrance_remaining / ENTRANCE_TIME
+		position = Vector2(base_x, lerpf(-430.0, 280.0, smoothstep(0.0, 1.0, progress)))
+		if entrance_remaining <= 0.0:
+			set_deferred("monitoring", true)
+			set_deferred("monitorable", true)
+			fire_timer = 0.6
+		return
 	if is_boss:
 		var target := Vector2(base_x + sin(Time.get_ticks_msec() * 0.0014) * amplitude, 280.0)
 		position = position.lerp(target, 1.9 * delta)
@@ -194,10 +215,36 @@ func _physics_process(delta: float) -> void:
 		position.x = base_x + sin(position.y * 0.011 + phase) * amplitude
 		if position.y > VIEW_SIZE.y + 160.0:
 			return_to_pool()
+	if is_boss and charge_remaining >= 0.0:
+		charge_remaining -= delta
+		charge_visual.queue_redraw()
+		if charge_remaining <= 0.0:
+			charge_remaining = -1.0
+			_fire_pattern()
+			fire_timer = fire_interval
+		return
 	fire_timer -= delta
 	if fire_timer <= 0.0:
-		_fire_pattern()
-		fire_timer = fire_interval
+		if is_boss:
+			charge_remaining = CHARGE_TIME
+			VFX.audio.play_sound("charge")
+		else:
+			_fire_pattern()
+			fire_timer = fire_interval
+
+func begin_entrance() -> void:
+	entrance_remaining = ENTRANCE_TIME
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
+
+func _draw_charge() -> void:
+	if not is_boss or charge_remaining < 0.0:
+		return
+	var amount := clampf(1.0 - charge_remaining / CHARGE_TIME, 0.0, 1.0)
+	var muzzle := Vector2(0, 160 if enemy_type == "boss2" else 150)
+	var color := Color(1.0, 0.68, 0.32, 0.35 + amount * 0.55)
+	charge_visual.draw_arc(muzzle, lerpf(38.0, 14.0, amount), 0, TAU, 40, color, 2.0, true)
+	charge_visual.draw_circle(muzzle, 4.0 + amount * 6.0, color)
 
 func _fire_pattern() -> void:
 	if is_boss:
@@ -252,7 +299,7 @@ func _fire_pattern() -> void:
 		request_fire.emit(origin, [Vector2.DOWN], 470.0, 10)
 
 func _on_area_entered(area: Area2D) -> void:
-	if is_dead:
+	if is_dead or entrance_remaining > 0.0:
 		return
 	# Direct ship-to-ship collision: enemy rams the player
 	if area.has_method("_shoot"):

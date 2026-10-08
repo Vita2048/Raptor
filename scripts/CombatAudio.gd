@@ -9,7 +9,7 @@ var random := RandomNumberGenerator.new()
 
 func _ready() -> void:
 	random.seed = 73519
-	for kind in ["shot", "enemy", "impact", "explosion", "heavy", "damage"]:
+	for kind in ["shot", "enemy", "impact", "explosion", "heavy", "damage", "alert", "charge"]:
 		sounds[kind] = _synthesize(kind)
 	for i in range(12):
 		var voice := AudioStreamPlayer.new()
@@ -44,6 +44,8 @@ func _synthesize(kind: String) -> AudioStreamWAV:
 	if kind == "explosion": duration = 0.65
 	if kind == "heavy": duration = 1.1
 	if kind == "damage": duration = 0.24
+	if kind == "alert": duration = 0.8
+	if kind == "charge": duration = 0.5
 	var count := int(duration * RATE)
 	var pcm := PackedByteArray()
 	pcm.resize(count * 2)
@@ -57,6 +59,12 @@ func _synthesize(kind: String) -> AudioStreamWAV:
 		var frequency := 160.0
 		var sample := 0.0
 		match kind:
+			"alert":
+				phase += TAU * 440.0 / RATE
+				sample = sin(phase) * 0.4 * pow(sin(progress * PI * 3.0), 2.0)
+			"charge":
+				phase += TAU * lerpf(180.0, 720.0, progress) / RATE
+				sample = sin(phase) * 0.4 * progress
 			"shot", "enemy":
 				frequency = lerpf(740.0 if kind == "shot" else 360.0, 95.0, sqrt(progress))
 				phase += TAU * frequency / RATE

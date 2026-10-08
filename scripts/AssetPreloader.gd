@@ -22,11 +22,21 @@ var bomb_texture: Texture2D
 var level2_building_textures: Array[Texture2D] = []
 var tank_texture: Texture2D
 var radar_texture: Texture2D
+var desert_buildings: Array[Texture2D] = []
 
 func _ready() -> void:
 	load_all()
 
 func load_all() -> void:
+	# Alpha bounds above 8% exclude nearly invisible generator edge noise.
+	var bounds := {"bunker": Rect2(72, 153, 1112, 906), "plant": Rect2(115, 172, 1041, 848), "radar": Rect2(133, 169, 974, 917)}
+	for kind in ["bunker", "plant", "radar"]:
+		var texture: Texture2D = load(BUILDINGS_DIR + "desert/" + kind + ".png")
+		var cropped := AtlasTexture.new()
+		cropped.atlas = texture
+		cropped.region = bounds[kind]
+		cropped.filter_clip = true
+		desert_buildings.append(cropped)
 	desert_textures = _load_named_series(BACKGROUND_DIR, "desert_tile", 1, 5)
 	space_textures = _load_named_series(BACKGROUND_DIR, "space_tile", 1, 2)
 	bridge_texture = load(BACKGROUND_DIR + "dessert_bridges.png")
@@ -102,6 +112,8 @@ func building_for_spawn_area(_index: int) -> Texture2D:
 	return buildings.pick_random()
 
 func get_buildings_for_level() -> Array[Texture2D]:
+	if not desert_buildings.is_empty():
+		return desert_buildings
 	if GameState != null and GameState.current_level >= 2:
 		return level2_building_textures
 	return building_textures
