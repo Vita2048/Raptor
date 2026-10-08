@@ -1,5 +1,8 @@
 extends Node2D
 
+signal camera_impulse(strength: float)
+var audio: Node
+
 const ObjectPool := preload("res://scripts/ObjectPool.gd")
 const MuzzleFlashScript := preload("res://scripts/MuzzleFlash.gd")
 const ImpactSparkScript := preload("res://scripts/ImpactSpark.gd")
@@ -9,16 +12,21 @@ var muzzle_pool: ObjectPool
 var impact_pool: ObjectPool
 
 func _ready() -> void:
+	audio = preload("res://scripts/CombatAudio.gd").new()
+	add_child(audio)
 	z_index = 200
 	muzzle_pool = ObjectPool.new(_create_muzzle_flash, self, 32)
 	impact_pool = ObjectPool.new(_create_impact_spark, self, 48)
 
 func muzzle_flash(pos: Vector2, direction: Vector2, player_owned: bool) -> void:
+	if not player_owned:
+		audio.play_sound("enemy")
 	var flash := muzzle_pool.acquire()
 	var tint := Color(4.0, 1.8, 0.65, 1.0) if player_owned else Color(4.0, 0.55, 0.25, 1.0)
 	flash.play_at(pos, direction.angle() + PI * 0.5, tint)
 
 func impact_spark(pos: Vector2, velocity: Vector2, player_owned: bool) -> void:
+	audio.play_sound("impact")
 	var spark := impact_pool.acquire()
 	var tint := Color(4.0, 1.6, 0.55, 1.0) if player_owned else Color(4.0, 0.35, 0.2, 1.0)
 	spark.play_at(pos, velocity, tint)

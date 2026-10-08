@@ -12,6 +12,9 @@ var world_spawner: Node2D
 var player: Area2D
 var enemy_manager: Node2D
 var hud: CanvasLayer
+var camera: Camera2D
+var shake_strength := 0.0
+var shake_time := 0.0
 
 func _ready() -> void:
 	randomize()
@@ -20,6 +23,10 @@ func _ready() -> void:
 
 func _build_scene() -> void:
 	_add_world_environment()
+	camera = Camera2D.new()
+	camera.position = Vector2(960, 540)
+	add_child(camera)
+	VFX.camera_impulse.connect(_on_camera_impulse)
 
 	background = ScrollingBackgroundScript.new()
 	background.name = "ParallaxBackground"
@@ -45,6 +52,14 @@ func _build_scene() -> void:
 	add_child(hud)
 
 	GameState.game_over.connect(_on_game_over)
+
+func _on_camera_impulse(strength: float) -> void:
+	shake_strength = minf(maxf(shake_strength, strength), 5.0)
+
+func _process(delta: float) -> void:
+	shake_time += delta
+	shake_strength = move_toward(shake_strength, 0.0, delta * 18.0)
+	camera.offset = Vector2(sin(shake_time * 83.0), cos(shake_time * 97.0)) * shake_strength
 
 func _on_game_over() -> void:
 	# Explode the player ship then hide it

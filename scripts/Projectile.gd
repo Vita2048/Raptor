@@ -178,8 +178,8 @@ func spawn_impact(pos: Vector2 = global_position) -> void:
 	VFX.impact_spark(pos, velocity, from_player)
 
 func on_pool_released() -> void:
-	monitoring = false
-	monitorable = false
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
 	velocity = Vector2.ZERO
 	impact_sent = false
 	trail.clear_points()

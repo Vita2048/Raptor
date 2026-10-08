@@ -19,6 +19,8 @@ var fire_timer := 1.5
 var fire_interval := 1.6
 var pool
 var sprite: Sprite2D
+var hit_material: ShaderMaterial
+var hit_strength := 0.0
 var collision_shape: CollisionShape2D
 var silhouette_collision_polygons: Array[CollisionPolygon2D] = []
 var is_boss := false
@@ -33,6 +35,12 @@ func _ready() -> void:
 	area_entered.connect(_on_area_entered)
 	sprite = Sprite2D.new()
 	add_child(sprite)
+	var shadow := preload("res://scripts/AircraftShadow.gd").new()
+	shadow.source = sprite
+	add_child(shadow)
+	hit_material = ShaderMaterial.new()
+	hit_material.shader = preload("res://shaders/ship_hit.gdshader")
+	sprite.material = hit_material
 	collision_shape = CollisionShape2D.new()
 	var circle := CircleShape2D.new()
 	circle.radius = 52.0
@@ -46,6 +54,8 @@ func spawn(kind: String, start_position: Vector2) -> void:
 	enemy_type = kind
 	is_boss = kind == "boss" or kind == "boss2"
 	is_dead = false
+	hit_strength = 0.0
+	hit_material.set_shader_parameter("hit_amount", 0.0)
 	global_position = start_position
 	base_x = start_position.x
 	phase = randf_range(0.0, TAU)
@@ -174,6 +184,8 @@ func spawn(kind: String, start_position: Vector2) -> void:
 	fire_timer = randf_range(0.4, fire_interval)
 
 func _physics_process(delta: float) -> void:
+	hit_strength = move_toward(hit_strength, 0.0, delta * 9.0)
+	hit_material.set_shader_parameter("hit_amount", hit_strength)
 	if is_boss:
 		var target := Vector2(base_x + sin(Time.get_ticks_msec() * 0.0014) * amplitude, 280.0)
 		position = position.lerp(target, 1.9 * delta)
@@ -257,6 +269,7 @@ func _on_area_entered(area: Area2D) -> void:
 		return
 	if area.has_method("is_player_damage") and area.is_player_damage():
 		health -= area.damage
+		hit_strength = 0.65
 		var impact_pos := area.global_position
 		if is_boss and area.has_method("velocity"):
 			impact_pos = _get_visual_impact_point(impact_pos, area.velocity)
@@ -281,8 +294,8 @@ func return_to_pool() -> void:
 		pool.release(self)
 
 func on_pool_released() -> void:
-	monitoring = false
-	monitorable = false
+	set_deferred("monitoring", false)
+	set_deferred("monitorable", false)
 
 func _configure_circle_collision(radius: float) -> void:
 	_clear_silhouette_collision()

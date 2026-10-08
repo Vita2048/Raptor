@@ -1,65 +1,40 @@
 extends Control
 
-var health: int = 100
-var max_health: int = 100
-var flash_time: float = 0.0
+var health := 100
+var max_health := 100
+var displayed_ratio := 1.0
+var damage_trail := 1.0
+var flash_time := 0.0
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
-	custom_minimum_size = Vector2(560, 58)
 
 func set_health(value: int, maximum: int) -> void:
-	var previous: int = health
-	health = max(value, 0)
-	max_health = max(maximum, 1)
-	if health < previous:
-		flash_time = 0.32
-	queue_redraw()
+	if value < health:
+		flash_time = 0.28
+	health = maxi(value, 0)
+	max_health = maxi(maximum, 1)
 
 func _process(delta: float) -> void:
-	if flash_time > 0.0:
-		flash_time = max(flash_time - delta, 0.0)
-		queue_redraw()
+	var ratio := float(health) / max_health
+	displayed_ratio = move_toward(displayed_ratio, ratio, delta * 1.8)
+	flash_time = maxf(flash_time - delta, 0.0)
+	if flash_time <= 0.0:
+		damage_trail = move_toward(damage_trail, ratio, delta * 0.4)
+	damage_trail = maxf(damage_trail, displayed_ratio)
+	queue_redraw()
 
 func _draw() -> void:
-	var bar_rect: Rect2 = Rect2(Vector2.ZERO, size)
-	var inner_rect: Rect2 = bar_rect.grow(-7.0)
-	var slot_rect: Rect2 = inner_rect.grow(-5.0)
-	var ratio: float = clampf(float(health) / float(max_health), 0.0, 1.0)
-	var pulse: float = 0.5 + sin(Time.get_ticks_msec() * 0.018) * 0.5
-
-	draw_rect(bar_rect, Color(0.0, 0.02, 0.06, 0.62), true)
-	draw_rect(inner_rect, Color(0.03, 0.12, 0.2, 0.78), true)
-	draw_rect(inner_rect, Color(0.36, 1.0, 1.5, 0.55), false, 2.0)
-	draw_line(Vector2(inner_rect.position.x, inner_rect.position.y + 2.0), Vector2(inner_rect.end.x, inner_rect.position.y + 2.0), Color(0.82, 2.2, 3.4, 0.6), 2.0)
-
-	var fill_width: float = slot_rect.size.x * ratio
-	var filled_rect: Rect2 = Rect2(slot_rect.position, Vector2(fill_width, slot_rect.size.y))
-	var fill_color: Color = Color(0.1, 1.05, 1.9, 0.92)
-	if ratio < 0.35:
-		fill_color = Color(2.3, 0.34 + pulse * 0.35, 0.18, 0.96)
-	elif ratio < 0.62:
-		fill_color = Color(2.0, 1.35, 0.26, 0.94)
-	draw_rect(filled_rect, fill_color, true)
-	draw_rect(Rect2(slot_rect.position, Vector2(fill_width, slot_rect.size.y * 0.38)), Color(1.0, 2.6, 3.6, 0.28), true)
-
-	var segments: int = 20
-	var gap: float = 4.0
-	var segment_width: float = (slot_rect.size.x - gap * float(segments - 1)) / float(segments)
-	for i in range(segments):
-		var x: float = slot_rect.position.x + float(i) * (segment_width + gap)
-		var segment: Rect2 = Rect2(Vector2(x, slot_rect.position.y), Vector2(segment_width, slot_rect.size.y))
-		draw_rect(segment, Color(0.75, 1.7, 2.6, 0.15), false, 1.0)
-		if float(i + 1) / float(segments) <= ratio:
-			draw_line(Vector2(x + segment_width, slot_rect.position.y + 4.0), Vector2(x + segment_width, slot_rect.end.y - 4.0), Color(1.0, 3.0, 4.5, 0.22), 2.0)
-
-	if flash_time > 0.0:
-		draw_rect(inner_rect, Color(1.0, 2.4, 3.6, flash_time * 1.25), true)
-
-	var font: Font = ThemeDB.fallback_font
-	var label: String = "SHIP ARMOR"
-	var value: String = "%03d / %03d" % [health, max_health]
-	draw_string(font, Vector2(18, -4), label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.6, 1.8, 2.8, 1.0))
-	draw_string(font, Vector2(19, -3), label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 18, Color(0.1, 0.3, 0.5, 0.6))
-	draw_string(font, Vector2(size.x - 165, 40), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 26, Color(0.95, 2.5, 3.6, 1.0))
-	draw_string(font, Vector2(size.x - 164, 41), value, HORIZONTAL_ALIGNMENT_LEFT, -1.0, 26, Color(0.2, 0.5, 0.7, 0.5))
+	var font := ThemeDB.fallback_font
+	var accent := Color("86d8de") if float(health) / max_health > 0.3 else Color("f1a16f")
+	draw_string(font, Vector2(0, 20), "SHIP ARMOR", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("95a9b1"))
+	draw_string(font, Vector2(size.x - 85, 20), "%03d / %03d" % [health, max_health], HORIZONTAL_ALIGNMENT_RIGHT, 85, 16, Color("e8efed"))
+	var slot := Rect2(0, 36, size.x, 10)
+	draw_rect(slot, Color("293740"))
+	draw_rect(Rect2(slot.position, Vector2(size.x * damage_trail, 10)), Color("ac7656"))
+	draw_rect(Rect2(slot.position, Vector2(size.x * displayed_ratio, 10)), accent)
+	for i in range(1, 10):
+		var x := size.x * float(i) / 10.0
+		draw_line(Vector2(x, 36), Vector2(x, 46), Color("101c25"), 3.0)
+	if health <= max_health * 0.3:
+		draw_string(font, Vector2(0, 65), "ARMOR CRITICAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, accent)

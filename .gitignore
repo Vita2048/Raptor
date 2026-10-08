@@ -6,3 +6,7 @@
 *.apk
 *.idsig
 
+# Local presentation verification outputs
+/artifacts/
+/*-check.log
+

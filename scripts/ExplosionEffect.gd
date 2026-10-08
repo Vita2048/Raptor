@@ -19,6 +19,8 @@ func configure(is_large: bool, multiplier: float = 1.0) -> void:
 	size_multiplier = (1.06 if is_large else 1.0) * multiplier
 
 func burst() -> void:
+	VFX.audio.play_sound("heavy" if large_scale else "explosion")
+	VFX.camera_impulse.emit(5.0 if large_scale else 1.3)
 	if large_scale:
 		_play_boss_flash()
 	_play_flash()

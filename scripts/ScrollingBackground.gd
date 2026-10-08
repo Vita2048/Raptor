@@ -18,7 +18,10 @@ func _ready() -> void:
 		sprite.centered = false
 		sprite.texture = texture
 		sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-		sprite.scale = Vector2.ONE * image_scale
+		sprite.scale = Vector2(image_scale * 1.012, image_scale)
+		var grade := ShaderMaterial.new()
+		grade.shader = preload("res://shaders/terrain.gdshader")
+		sprite.material = grade
 		add_child(sprite)
 		sprites.append(sprite)
 	_update_sprite_positions()
@@ -32,4 +35,4 @@ func _update_sprite_positions() -> void:
 		return
 	var first_y := scroll_offset - loop_height
 	for i in range(sprites.size()):
-		sprites[i].position = Vector2(0.0, first_y + float(i) * loop_height)
+		sprites[i].position = Vector2(-VIEW_SIZE.x * 0.006, first_y + float(i) * loop_height)

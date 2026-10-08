@@ -14,6 +14,9 @@ var shoot_timer := 0.0
 var bullet_pool: ObjectPool
 var muzzle_offsets := [Vector2(-46, -104), Vector2(46, -104)]
 var sprite: Sprite2D
+var hit_material: ShaderMaterial
+var hit_strength := 0.0
+var previous_health := 100
 
 # Touch/Android Controls
 var is_android := false
@@ -30,6 +33,14 @@ func _ready() -> void:
 	sprite.texture = AssetDB.ship_textures["player"]
 	sprite.scale = Vector2.ONE * 0.55
 	add_child(sprite)
+	var shadow := preload("res://scripts/AircraftShadow.gd").new()
+	shadow.source = sprite
+	add_child(shadow)
+	hit_material = ShaderMaterial.new()
+	hit_material.shader = preload("res://shaders/ship_hit.gdshader")
+	sprite.material = hit_material
+	previous_health = GameState.player_health
+	GameState.player_health_changed.connect(_on_health_feedback)
 	_add_exhaust(Vector2(-20, 74), 82.0, 24.0, 0.0)
 	_add_exhaust(Vector2(20, 74), 82.0, 24.0, 0.0)
 
@@ -53,6 +64,11 @@ func _ready() -> void:
 		add_child(touch_indicator)
 
 func _physics_process(delta: float) -> void:
+	hit_strength = move_toward(hit_strength, 0.0, delta * 6.0)
+	hit_material.set_shader_parameter("hit_amount", hit_strength)
+	sprite.position.y = move_toward(sprite.position.y, 0.0, delta * 38.0)
+	if not GameState.game_active:
+		return
 	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	position += input_vector * speed * delta
 	position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
@@ -114,6 +130,8 @@ func _play_toggle_flash() -> void:
 	flash.queue_free()
 
 func _shoot() -> void:
+	sprite.position.y = 2.5
+	VFX.audio.play_sound("shot")
 	var lvl := GameState.current_level
 	if lvl >= 2:
 		# Level 2: triple spread shot, slightly slower but wider coverage
@@ -136,6 +154,13 @@ func _create_bullet() -> Area2D:
 	var bullet := ProjectileScript.new()
 	bullet.name = "PlayerProjectile"
 	return bullet
+
+func _on_health_feedback(value: int, _maximum: int) -> void:
+	if value < previous_health:
+		hit_strength = 0.8
+		VFX.audio.play_sound("damage")
+		VFX.camera_impulse.emit(3.0)
+	previous_health = value
 
 func _add_exhaust(local_position: Vector2, length: float, width: float, angle: float) -> void:
 	var exhaust := ExhaustPlumeScript.new()
