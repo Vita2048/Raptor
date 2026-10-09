@@ -296,7 +296,7 @@ func _hide_menu_button() -> void:
 func show_level_transition(from_level: int, to_level: int) -> Panel:
 	var panel := _panel(root, Vector2(660, 200), Vector2(600, 110))
 	_center_dialog_in_view(panel)
-	var label := _label(panel, Vector2(24, 18), Vector2(552, 74), "SECTOR %02d CLEARED\nENTERING SECTOR %02d" % [from_level, to_level], 25, WHITE)
+	var label := _label(panel, Vector2(24, 18), Vector2(552, 74), "SECTOR %02d CLEARED\n%s" % [from_level, AssetDB.SECTOR_NAMES[clampi(to_level - 1, 0, 2)]], 25, WHITE)
 	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	panel.modulate.a = 0.0
 	var tween := create_tween()

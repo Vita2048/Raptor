@@ -9,6 +9,8 @@ const ITEMS_DIR := "res://assets/items/"
 var background_textures: Array[Texture2D] = []
 var desert_textures: Array[Texture2D] = []
 var space_textures: Array[Texture2D] = []
+var sector_textures: Array[Texture2D] = []
+const SECTOR_NAMES := ["CANYON APPROACH", "INDUSTRIAL RIVERWORKS", "COMMAND FORTRESS"]
 var bridge_texture: Texture2D
 var building_textures: Array[Texture2D] = []
 var building_textures_by_name := {}
@@ -56,7 +58,8 @@ func load_all() -> void:
 	desert_textures = _load_named_series(BACKGROUND_DIR, "desert_tile", 1, 5)
 	space_textures = _load_named_series(BACKGROUND_DIR, "space_tile", 1, 2)
 	bridge_texture = load(BACKGROUND_DIR + "dessert_bridges.png")
-	background_textures = [bridge_texture]
+	sector_textures = [bridge_texture, load(BACKGROUND_DIR + "industrial_riverworks.png"), load(BACKGROUND_DIR + "command_fortress.png")]
+	background_textures = sector_textures
 	building_textures_by_name = {
 		"Bunker": load(BUILDINGS_DIR + "Bunker.png"),
 		"Factory": load(BUILDINGS_DIR + "Factory.png"),
@@ -143,7 +146,10 @@ func building_for_spawn_area(_index: int) -> Texture2D:
 
 func get_buildings_for_level() -> Array[Texture2D]:
 	if not desert_buildings.is_empty():
-		return desert_buildings
+		match GameState.current_level:
+			1: return [desert_buildings[0], desert_buildings[2], desert_buildings[3]]
+			2: return [desert_buildings[1], desert_buildings[3], desert_buildings[4]]
+			_: return [desert_buildings[0], desert_buildings[2], desert_buildings[3]]
 	if GameState != null and GameState.current_level >= 2:
 		return level2_building_textures
 	return building_textures

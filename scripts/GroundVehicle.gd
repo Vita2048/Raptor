@@ -1,5 +1,6 @@
 extends Area2D
 
+var traffic_route_index := -1
 var traffic: Node2D
 var route: Curve2D
 var kind := "tank"
@@ -97,7 +98,7 @@ func _update_position(delta: float) -> void:
 			sprite.rotation = lerp_angle(sprite.rotation, tangent.angle() + PI * 0.5, minf(delta * 6.0, 1.0))
 			shape.rotation = sprite.rotation
 			shadow.rotation = sprite.rotation
-	position = traffic.map_to_screen(map_position, cycle)
+	position = traffic.map_to_screen(map_position, cycle, traffic_route_index)
 	visible = position.y > -180 and position.y < 1280
 
 func _reset_vehicle() -> void:

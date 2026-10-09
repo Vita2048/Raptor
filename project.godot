@@ -81,3 +81,10 @@ fire={
 
 renderer/rendering_method="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+
+[shader_globals]
+
+sector_light={
+"type": "vec4",
+"value": Vector4(0.94, 0.95, 0.97, 1)
+}

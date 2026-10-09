@@ -44,6 +44,7 @@ func _ready() -> void:
 	add_child(shadow)
 	hit_material = ShaderMaterial.new()
 	hit_material.shader = preload("res://shaders/ship_hit.gdshader")
+	hit_material.set_shader_parameter("player_accent", true)
 	sprite.material = hit_material
 	previous_health = GameState.player_health
 	GameState.player_health_changed.connect(_on_health_feedback)

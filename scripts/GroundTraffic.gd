@@ -20,6 +20,7 @@ func _ready() -> void:
 	for i in range(ROUTES.size()):
 		var vehicle := Vehicle.new()
 		vehicle.traffic = self
+		vehicle.traffic_route_index = i
 		vehicle.kind = "tank" if i % 2 == 0 else "truck"
 		vehicle.route = Curve2D.new()
 		for point in ROUTES[i]:
@@ -31,9 +32,24 @@ func _ready() -> void:
 func combat_enabled() -> bool:
 	return GameState.game_active and not GameState.boss_active and not enemy_manager.boss_pending
 
-func map_to_screen(point: Vector2, cycle: int) -> Vector2:
-	return Vector2(point.x * background.image_scale * 1.012 - 11.52,
-		point.y * background.image_scale + background.distance - cycle * background.loop_height)
+func map_to_screen(point: Vector2, cycle: int, route_index := -1) -> Vector2:
+	var y: float = point.y * background.image_scale + background.distance - cycle * background.loop_height
+	# New terrain moves the outer service roads inward. Follow the same advancing
+	# blend as the terrain, preserving each vehicle's route progress and wreck state.
+	var arrival := smoothstep(y / 1080.0 - 0.18, y / 1080.0 + 0.18, background.transition_progress * 1.4 - 0.2)
+	var old_offset := _road_offset(background.previous_sector, route_index)
+	var new_offset := _road_offset(background.terrain_sector, route_index)
+	var x := point.x + lerpf(old_offset, new_offset, arrival)
+	return Vector2(x * background.image_scale * 1.012 - 11.52, y)
+
+func _road_offset(sector: int, route_index: int) -> float:
+	if sector < 2:
+		return 0.0
+	if route_index == 2:
+		return -90.0
+	if route_index == 3:
+		return 65.0
+	return 0.0
 
 func shoot(origin: Vector2, direction: Vector2, kind: String) -> void:
 	if not combat_enabled():

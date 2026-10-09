@@ -90,7 +90,7 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		collision_layer = 4
 		collision_mask = 2
 		sprite.texture = AssetDB.random_particle("flash")
-		sprite.modulate = Color(4.0, 1.35, 0.25, 1.0)
+		sprite.modulate = Color(0.35, 1.5, 2.0, 1.0)
 		sprite.scale = Vector2.ONE * 0.032
 		
 		trail.texture = null

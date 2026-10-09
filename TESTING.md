@@ -98,3 +98,33 @@ explosion, muzzle flash, and impact spark at startup (no sound/shake). This
 forces WebGL shader compiles and particle-texture uploads before combat so
 the first mid-game explosion doesn't freeze. Extend it when adding new
 effect kinds. Checked by `res://tests/warmup_smoke.gd`.
+
+## Sector terrain and visual presentation
+
+Aircraft retain the shared metal/paint grade, softer ground contrast, and cyan
+player accents. Hostile shots retain their original glow, sparks, trails and
+rendering order; the outlined cores from the initial pass were reverted.
+
+Sector 1 uses the original canyon. Sector 2 uses industrial_riverworks.png with
+spillways, refineries and loading yards. Sector 3 uses command_fortress.png with
+armored bridges, cliff defenses and command installations. Both new textures
+share the original normalized map coordinates, retaining bridge routes and
+structure yards. Outer vehicle routes shift inward to follow the new service
+roads. Scenery damage and wreck state persist during the five-second advancing
+terrain blend; checkpoint retries initialize the correct map immediately.
+The terrain shader blends opposing edges over a narrow strip at the loop seam.
+
+Run tests with rendering enabled (screenshot checkpoints cannot run headless):
+- res://tests/visual_pass_smoke.gd
+- res://tests/campaign_smoke.gd
+- res://tests/ground_combat_smoke.gd
+
+Visual captures: artifacts/visual-sector-1.png through visual-sector-3.png,
+and sector-transition-2.png / sector-transition-3.png. Checks cover terrain
+selection, transition progress, checkpoint initialization, wrap continuity,
+original hostile rendering order/sparks, unchanged projectile collision radius,
+and the retained player accent. Campaign and ground tests cover progression,
+bosses, real projectile collisions, vehicle firing and persistent destruction.
+
+Source assets and generation prompts: assets/background/SECTOR_ART.md.
+APK and web distributions require a new export.
