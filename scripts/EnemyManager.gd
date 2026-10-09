@@ -30,11 +30,9 @@ static func spawn_interval_for_level(level: int) -> float:
 		return 0.95
 	return 0.95
 
-static func wave_count_for_level(level: int) -> int:
-	# Sectors 2+ field ~25% fewer ships per wave (2-5, avg 3.5) than sector 1 (3-6, avg 4.5).
-	if level >= 2:
-		return randi_range(2, 5)
-	return randi_range(3, 6)
+static func wave_count_for_level(_level: int) -> int:
+	# All sectors field 2-5 ships per wave (avg 3.5); sector 1 was cut ~25% from 3-6.
+	return randi_range(2, 4)
 
 func _process(delta: float) -> void:
 	if not GameState.game_active or boss_pending:

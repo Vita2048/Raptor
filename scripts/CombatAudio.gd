@@ -91,6 +91,7 @@ func play_preview() -> void:
 
 func _save_settings() -> void:
 	var cfg := ConfigFile.new()
+	cfg.load(SETTINGS_PATH)  # keep other sections (e.g. display) intact
 	cfg.set_value("audio", "volume", volume)
 	cfg.set_value("audio", "muted", muted)
 	cfg.save(SETTINGS_PATH)

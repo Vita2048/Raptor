@@ -32,6 +32,12 @@ window/size/window_height_override=1080
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 
+[editor]
+
+movie_writer/video_quality=1.0
+movie_writer/movie_file="C:/Temp/Raptor/Recording.avi"
+movie_writer/fps=30
+
 [input]
 
 ui_left={

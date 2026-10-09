@@ -8,13 +8,60 @@ const WHITE := Color("e8efed")
 const MUTED := Color("95a9b1")
 const AMBER := Color("efb26e")
 
+const SETTINGS_PATH := "user://settings.cfg"
+const RESOLUTIONS: Array[Vector2i] = [Vector2i(1920, 1080), Vector2i(1600, 900), Vector2i(1280, 720)]
+
 var root: Control
 var volume_slider: HSlider
 var volume_value_label: Label
 var mute_button: Button
 var resume_button: Button
+var resolution_buttons: Array[Button] = []
 var is_open := false
 var _updating_slider := false
+
+static func resolution_supported() -> bool:
+	# Window sizing only makes sense on desktop. On Web the canvas is owned by
+	# the browser, on mobile the window is the fullscreen device screen.
+	if OS.has_feature("web") or OS.has_feature("android") or OS.has_feature("ios"):
+		return false
+	return true
+
+static func resolution_to_string(size: Vector2i) -> String:
+	return "%dx%d" % [size.x, size.y]
+
+static func parse_resolution(text: String) -> Vector2i:
+	var parts := text.split("x")
+	if parts.size() != 2 or not parts[0].is_valid_int() or not parts[1].is_valid_int():
+		return Vector2i(-1, -1)
+	return Vector2i(int(parts[0]), int(parts[1]))
+
+static func saved_resolution() -> Vector2i:
+	var cfg := ConfigFile.new()
+	if cfg.load(SETTINGS_PATH) != OK:
+		return Vector2i(-1, -1)
+	return parse_resolution(str(cfg.get_value("display", "resolution", "")))
+
+static func apply_resolution(size: Vector2i, save := true) -> void:
+	if not resolution_supported():
+		return
+	if size.x <= 0 or size.y <= 0:
+		return
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_size(size)
+	var screen_size := DisplayServer.screen_get_size()
+	DisplayServer.window_set_position((screen_size - size) / 2)
+	if save:
+		var cfg := ConfigFile.new()
+		cfg.load(SETTINGS_PATH)  # keep other sections (e.g. audio) intact
+		cfg.set_value("display", "resolution", resolution_to_string(size))
+		cfg.save(SETTINGS_PATH)
+
+static func apply_saved_resolution() -> void:
+	# No saved choice: respect the project/window settings, change nothing.
+	var size := saved_resolution()
+	if size.x > 0 and size.y > 0:
+		apply_resolution(size, false)
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -51,6 +98,7 @@ func set_open(value: bool, pause_tree := true) -> void:
 		get_tree().paused = is_open
 	if is_open:
 		_refresh_from_audio()
+		_refresh_resolution_buttons()
 		if resume_button:
 			resume_button.grab_focus()
 
@@ -130,7 +178,7 @@ func _build_ui() -> void:
 	shade.color = Color(0.015, 0.025, 0.035, 0.72)
 	root.add_child(shade)
 
-	var panel := _panel(root, Vector2(630, 290), Vector2(660, 470))
+	var panel := _panel(root, Vector2(630, 240), Vector2(660, 560))
 	var eyebrow := _label(panel, Vector2(30, 28), Vector2(600, 30), "RAPTOR  /  OPTIONS   —   ESC TO RESUME", 18, CYAN)
 	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var title := _label(panel, Vector2(30, 66), Vector2(600, 70), "PAUSED", 54, WHITE)
@@ -153,18 +201,34 @@ func _build_ui() -> void:
 	volume_slider.value_changed.connect(_on_slider_changed)
 	volume_slider.drag_ended.connect(_on_slider_drag_ended)
 
-	var hint := _label(panel, Vector2(40, 244), Vector2(580, 24), "Drag slider to adjust volume. Setting is saved.", 15, MUTED)
-	hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
-	mute_button = _button(panel, Vector2(40, 288), Vector2(280, 56), "SOUND  ON")
+
+	if resolution_supported():
+		_label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION", 18, MUTED)
+		for i in range(RESOLUTIONS.size()):
+			var choice: Vector2i = RESOLUTIONS[i]
+			var res_button := _button(panel, Vector2(40 + i * 200, 312), Vector2(180, 52),
+				resolution_to_string(choice))
+			var index := i
+			res_button.pressed.connect(func(): _on_resolution_pressed(index))
+			resolution_buttons.append(res_button)
+		_refresh_resolution_buttons()
+	else:
+		var fixed_note := _label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION: FIXED BY DEVICE / BROWSER", 18, MUTED)
+		fixed_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+
+
+	mute_button = _button(panel, Vector2(40, 380), Vector2(280, 56), "SOUND  ON")
 	mute_button.pressed.connect(_on_mute_pressed)
-	var restart_button := _button(panel, Vector2(340, 288), Vector2(280, 56), "RESTART")
+	var restart_button := _button(panel, Vector2(340, 380), Vector2(280, 56), "RESTART")
 	restart_button.pressed.connect(_on_restart_pressed)
 
-	resume_button = _button(panel, Vector2(40, 364), Vector2(280, 62), "RESUME  (ESC)")
+	resume_button = _button(panel, Vector2(40, 458), Vector2(280, 62), "RESUME  (ESC)")
 	resume_button.pressed.connect(func(): set_open(false))
-	var exit_button := _button(panel, Vector2(340, 364), Vector2(280, 62), "EXIT")
+	var exit_button := _button(panel, Vector2(340, 458), Vector2(280, 62), "EXIT")
 	exit_button.pressed.connect(_on_exit_pressed)
+	var capture_hint := _label(panel, Vector2(40, 524), Vector2(580, 26), "S SCREENSHOT  ·  R RECORD 30FPS  (DESKTOP)", 15, MUTED)
+	capture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 # ── Handlers ─────────────────────────────────────────────────────────
 
@@ -185,6 +249,18 @@ func _on_mute_pressed() -> void:
 		return
 	VFX.audio.toggle_muted()
 	_refresh_from_audio()
+
+func _on_resolution_pressed(index: int) -> void:
+	if index < 0 or index >= RESOLUTIONS.size():
+		return
+	apply_resolution(RESOLUTIONS[index])
+	_refresh_resolution_buttons()
+
+func _refresh_resolution_buttons() -> void:
+	var current := DisplayServer.window_get_size()
+	for i in range(resolution_buttons.size()):
+		var choice: Vector2i = RESOLUTIONS[i]
+		resolution_buttons[i].text = ("✓ " if choice == current else "") + resolution_to_string(choice)
 
 func _on_restart_pressed() -> void:
 	get_tree().paused = false

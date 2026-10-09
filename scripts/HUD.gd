@@ -6,8 +6,15 @@ const WHITE := Color("e8efed")
 const MUTED := Color("95a9b1")
 const AMBER := Color("efb26e")
 const PlayerHealthBarScript := preload("res://scripts/PlayerHealthBar.gd")
+# Single shared corner margin for the armor / score / sound HUDs.
+const CORNER_MARGIN := Vector2(16, 16)
+# Design playfield the camera projects; margins are measured from this
+# centered rectangle, not from raw viewport edges (which grow with expand).
+const DESIGN_SIZE := Vector2(1920, 1080)
 
 var health_bar: Control
+var armor_panel: Panel
+var score_panel: Panel
 var score_label: Label
 var level_label: Label
 var boss_bar: ProgressBar
@@ -25,6 +32,8 @@ var approach_panel: Panel
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	_build_ui()
+	root.resized.connect(_refresh_layout)
+	_refresh_layout()
 	GameState.score_changed.connect(_on_score_changed)
 	GameState.player_health_changed.connect(_on_player_health_changed)
 	GameState.boss_started.connect(_on_boss_started)
@@ -59,6 +68,32 @@ func _panel(parent: Node, at: Vector2, dimensions: Vector2) -> Panel:
 	parent.add_child(panel)
 	return panel
 
+# Corner anchors keep the HUDs glued to the viewport corners (with the shared
+# CORNER_MARGIN) at any window size/aspect instead of drifting on wide screens.
+func _refresh_layout() -> void:
+	var view := root.size
+	if view.x < 1.0 or view.y < 1.0:
+		view = DESIGN_SIZE
+	_layout_corners(view)
+
+# Positions the persistent HUDs inside the projected game rectangle: the design
+# playfield centered in the viewport and clamped to it. With expand aspect the
+# raw viewport can be larger than the playfield, so margins are measured from
+# this rectangle rather than from viewport edges.
+func _layout_corners(view: Vector2) -> void:
+	var rect_size := Vector2(minf(DESIGN_SIZE.x, view.x), minf(DESIGN_SIZE.y, view.y))
+	var rect_pos := (view - rect_size) * 0.5
+	armor_panel.position = rect_pos + CORNER_MARGIN
+	score_panel.position = Vector2(
+		rect_pos.x + rect_size.x - CORNER_MARGIN.x - score_panel.size.x,
+		rect_pos.y + CORNER_MARGIN.y)
+	sound_button.position = Vector2(
+		rect_pos.x + rect_size.x - CORNER_MARGIN.x - sound_button.size.x,
+		rect_pos.y + rect_size.y - CORNER_MARGIN.y - sound_button.size.y)
+	boss_panel.position = Vector2(
+		rect_pos.x + (rect_size.x - boss_panel.size.x) * 0.5,
+		rect_pos.y + CORNER_MARGIN.y)
+
 func _label(parent: Node, at: Vector2, dimensions: Vector2, caption: String, font_size: int, color: Color) -> Label:
 	var label := Label.new()
 	label.position = at
@@ -91,13 +126,15 @@ func _build_ui() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 
-	var armor_panel := _panel(root, Vector2(32, 28), Vector2(360, 94))
+	armor_panel = _panel(root, CORNER_MARGIN, Vector2(360, 94))
+	armor_panel.name = "ArmorPanel"
 	health_bar = PlayerHealthBarScript.new()
 	health_bar.position = Vector2(18, 12)
 	health_bar.size = Vector2(324, 70)
 	armor_panel.add_child(health_bar)
 
-	var score_panel := _panel(root, Vector2(1570, 28), Vector2(318, 94))
+	score_panel = _panel(root, Vector2(1570, 28), Vector2(318, 94))
+	score_panel.name = "ScorePanel"
 	_label(score_panel, Vector2(18, 10), Vector2(100, 22), "SCORE", 16, MUTED)
 	level_label = _label(score_panel, Vector2(140, 10), Vector2(160, 22), "", 16, CYAN)
 	level_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT

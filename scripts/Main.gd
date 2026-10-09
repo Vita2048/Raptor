@@ -6,6 +6,7 @@ const PlayerShipScript := preload("res://scripts/PlayerShip.gd")
 const EnemyManagerScript := preload("res://scripts/EnemyManager.gd")
 const HUDScript := preload("res://scripts/HUD.gd")
 const PauseMenuScript := preload("res://scripts/PauseMenu.gd")
+const CaptureManagerScript := preload("res://scripts/CaptureManager.gd")
 const ExplosionScene := preload("res://scenes/ExplosionEffect.tscn")
 
 var background: Node2D
@@ -15,12 +16,14 @@ var enemy_manager: Node2D
 var ground_traffic: Node2D
 var hud: CanvasLayer
 var pause_menu: CanvasLayer
+var capture_manager: Node
 var camera: Camera2D
 var shake_strength := 0.0
 var shake_time := 0.0
 
 func _ready() -> void:
 	randomize()
+	PauseMenuScript.apply_saved_resolution()
 	# Dying retries the current sector; victory, pause restart, and fresh launch start over.
 	var retry_after_death := not GameState.game_active and not GameState.campaign_won
 	var saved_checkpoint: int = GameState.checkpoint_level
@@ -92,6 +95,10 @@ func _build_scene() -> void:
 	pause_menu = PauseMenuScript.new()
 	pause_menu.name = "PauseMenu"
 	add_child(pause_menu)
+
+	capture_manager = CaptureManagerScript.new()
+	capture_manager.name = "CaptureManager"
+	add_child(capture_manager)
 
 	GameState.game_over.connect(_on_game_over)
 	GameState.campaign_completed.connect(_on_campaign_completed)
