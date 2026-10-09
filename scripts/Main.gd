@@ -32,6 +32,7 @@ func _ready() -> void:
 	if retry_same_sector:
 		GameState.restore_checkpoint()
 	_build_scene()
+	VFX.warm_up()
 	if GameState.current_level > 1 and not preload("res://scripts/DebugOptions.gd").final_boss_requested():
 		world_spawner.rebuild_for_level(GameState.current_level)
 	if preload("res://scripts/DebugOptions.gd").final_boss_requested():

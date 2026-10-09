@@ -187,6 +187,12 @@ func start_recording(bypass_platform_check := false) -> void:
 		_toast("Recording is only available on Desktop")
 		return
 	_session_dir = "user://recordings/REC_" + _timestamp()
+	# Two sessions started within the same second (or a live user session
+	# colliding with a test run) must never share a folder.
+	var suffix := 1
+	while DirAccess.dir_exists_absolute(_session_dir) and not _dir_is_empty(_session_dir):
+		suffix += 1
+		_session_dir = "user://recordings/REC_" + _timestamp() + "_%d" % suffix
 	if DirAccess.make_dir_recursive_absolute(_session_dir) != OK:
 		_toast("Recording failed: cannot create folder")
 		_session_dir = ""
@@ -281,6 +287,12 @@ func _capture_image() -> Image:
 	if img == null or img.is_empty() or img.get_width() <= 0 or img.get_height() <= 0:
 		return null
 	return img
+
+func _dir_is_empty(dir: String) -> bool:
+	var access := DirAccess.open(dir)
+	if access == null:
+		return true
+	return access.get_files().is_empty() and access.get_directories().is_empty()
 
 func _timestamp() -> String:
 	var dt := Time.get_datetime_dict_from_system()

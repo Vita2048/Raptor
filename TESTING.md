@@ -76,3 +76,11 @@ Lower resolutions render fewer pixels, which speeds up both the game and the
 Desktop only: on Web the canvas is owned by the browser and on mobile the
 window is the device screen, so the menu shows "FIXED BY DEVICE / BROWSER"
 and the saved setting is ignored there.
+
+## Effect warm-up (Web first-explosion freeze)
+
+`Main` calls `VFX.warm_up()` once per process: one quiet small + large
+explosion, muzzle flash, and impact spark at startup (no sound/shake). This
+forces WebGL shader compiles and particle-texture uploads before combat so
+the first mid-game explosion doesn't freeze. Extend it when adding new
+effect kinds. Checked by `res://tests/warmup_smoke.gd`.

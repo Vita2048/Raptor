@@ -10,6 +10,7 @@ const ExplosionScene := preload("res://scenes/ExplosionEffect.tscn")
 
 var muzzle_pool: ObjectPool
 var impact_pool: ObjectPool
+var _warmed := false
 
 func _ready() -> void:
 	audio = preload("res://scripts/CombatAudio.gd").new()
@@ -18,15 +19,39 @@ func _ready() -> void:
 	muzzle_pool = ObjectPool.new(_create_muzzle_flash, self, 32)
 	impact_pool = ObjectPool.new(_create_impact_spark, self, 48)
 
-func muzzle_flash(pos: Vector2, direction: Vector2, player_owned: bool) -> void:
-	if not player_owned:
+func warm_up() -> void:
+	# Prebuffer every effect kind once (small/large explosion, muzzle, spark)
+	# so WebGL compiles shaders and uploads textures at startup instead of
+	# freezing on the first mid-combat explosion. Quiet: no sound or shake.
+	if _warmed:
+		return
+	_warmed = true
+	var anchor := Vector2(960, 700)
+	var muzzle := muzzle_pool.acquire()
+	muzzle.play_at(anchor, 0.0, Color(4.0, 1.8, 0.65, 1.0))
+	var spark := impact_pool.acquire()
+	spark.play_at(anchor, Vector2.DOWN, Color(4.0, 1.6, 0.55, 1.0))
+	_spawn_warmup_explosion(anchor, false)
+	_spawn_warmup_explosion(anchor, true)
+
+func _spawn_warmup_explosion(pos: Vector2, is_large: bool) -> void:
+	var explosion = ExplosionScene.instantiate()
+	explosion.top_level = true
+	explosion.global_position = pos
+	explosion.configure(is_large, 0.5)
+	add_child(explosion)
+	explosion.burst(true)
+
+func muzzle_flash(pos: Vector2, direction: Vector2, player_owned: bool, quiet := false) -> void:
+	if not player_owned and not quiet:
 		audio.play_sound("enemy")
 	var flash := muzzle_pool.acquire()
 	var tint := Color(4.0, 1.8, 0.65, 1.0) if player_owned else Color(4.0, 0.55, 0.25, 1.0)
 	flash.play_at(pos, direction.angle() + PI * 0.5, tint)
 
-func impact_spark(pos: Vector2, velocity: Vector2, player_owned: bool) -> void:
-	audio.play_sound("impact")
+func impact_spark(pos: Vector2, velocity: Vector2, player_owned: bool, quiet := false) -> void:
+	if not quiet:
+		audio.play_sound("impact")
 	var spark := impact_pool.acquire()
 	var tint := Color(4.0, 1.6, 0.55, 1.0) if player_owned else Color(4.0, 0.35, 0.2, 1.0)
 	spark.play_at(pos, velocity, tint)
