@@ -1,5 +1,12 @@
 # Sector terrain assets
 
+## Final riverbank and pipe correction
+
+Built-in image_gen localized edit, assembled by `tools/repair_industrial_pipes.gd`. Final asset: `assets/background/industrial_riverworks.png`. Only the two shoreline/pipe zones are inserted; accepted rails, clarifier and silos are verified pixel-identical. Fortress is unchanged. Latest preview: `artifacts/seams/industrial-final-join.png` and `industrial-river-pipe-detail.png`. This supersedes the previous assertion that all central river columns remain unchanged.
+
+Prompt:
+Localized production game texture repair. Preserve this exact image composition, scale, colors, lighting and all structures except TWO small defective junctions at the middle. Coordinates refer to input 887x512: LEFT shoreline near x=285..390,y=235..285 has a sharp horizontal step/kink: replace with a gently continuous natural sloping riverbank and continuous white shoreline foam, flowing smoothly from above to below. RIGHT riverbank/pipes near x=520..650,y=225..310: reconnect every copper and steel pipeline across the horizontal join into continuous physically plausible pipes of consistent diameter with proper elbows/couplings; remove abrupt staggered cutoffs, doubled or mismatched segments. Smooth the right shoreline too. Keep corrected circular basin, silos and rails entirely unchanged. Keep bridge and all terrain outside these small areas unchanged. Same aspect ratio 887:512, no reframing, zoom, crop, added objects, blur or text. This is surgical correction of shoreline tangency and pipe topology, not regeneration of the map.
+
 ## Industrial geometry revision
 
 The first seam repair left malformed rails, clarifier rims and silo roofs. A second built-in image_gen edit reconstructs those as complete objects. `tools/revise_industrial_seam.gd` applies the corrected outer sides only; columns 265 through 694 are verified pixel-identical to the preceding version. This revision can affect the outermost 231 rows at each end on those sides, superseding the earlier 159-row limit for the industrial texture. The fortress texture is unchanged by this revision.
