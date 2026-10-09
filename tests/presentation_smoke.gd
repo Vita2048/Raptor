@@ -29,7 +29,7 @@ func _run() -> void:
 	await create_timer(0.2).timeout
 	await _capture("gameplay")
 	var assets := root.get_node("AssetDB")
-	assert(assets.desert_buildings.size() == 3)
+	assert(assets.desert_buildings.size() == 5)
 	for texture in assets.desert_buildings:
 		assert(texture.atlas.get_image().get_pixel(0, 0).a < 0.01, "Building background must be transparent")
 	var spawner = scene.world_spawner

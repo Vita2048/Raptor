@@ -12,6 +12,7 @@ var background: Node2D
 var world_spawner: Node2D
 var player: Area2D
 var enemy_manager: Node2D
+var ground_traffic: Node2D
 var hud: CanvasLayer
 var pause_menu: CanvasLayer
 var camera: Camera2D
@@ -58,6 +59,12 @@ func _build_scene() -> void:
 	enemy_manager.name = "EnemyManager"
 	enemy_manager.player = player
 	add_child(enemy_manager)
+	ground_traffic = preload("res://scripts/GroundTraffic.gd").new()
+	ground_traffic.name = "GroundTraffic"
+	ground_traffic.background = background
+	ground_traffic.enemy_manager = enemy_manager
+	ground_traffic.player = player
+	add_child(ground_traffic)
 
 	hud = HUDScript.new()
 	hud.name = "HUD"

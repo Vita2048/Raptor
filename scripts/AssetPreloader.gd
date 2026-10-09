@@ -23,6 +23,8 @@ var level2_building_textures: Array[Texture2D] = []
 var tank_texture: Texture2D
 var radar_texture: Texture2D
 var desert_buildings: Array[Texture2D] = []
+var vehicle_textures: Dictionary = {}
+var crater_texture: Texture2D
 
 func _ready() -> void:
 	load_all()
@@ -36,7 +38,20 @@ func load_all() -> void:
 		cropped.atlas = texture
 		cropped.region = bounds[kind]
 		cropped.filter_clip = true
+		cropped.set_meta("health", 126 if kind == "bunker" else 90)
+		cropped.set_meta("score", 400 if kind == "bunker" else 350)
 		desert_buildings.append(cropped)
+	var hangar := _ground_texture("hangar", Rect2(58, 242, 1137, 721))
+	hangar.set_meta("health", 144)
+	hangar.set_meta("score", 500)
+	desert_buildings.append(hangar)
+	var depot := _ground_texture("fuel_depot", Rect2(177, 146, 901, 935))
+	depot.set_meta("health", 54)
+	depot.set_meta("score", 300)
+	desert_buildings.append(depot)
+	crater_texture = _ground_texture("crater", Rect2(20, 13, 1219, 1230))
+	vehicle_textures["tank"] = _ground_texture("tank", Rect2(333, 2, 588, 1221))
+	vehicle_textures["truck"] = _ground_texture("truck", Rect2(224, 98, 574, 1252))
 	desert_textures = _load_named_series(BACKGROUND_DIR, "desert_tile", 1, 5)
 	space_textures = _load_named_series(BACKGROUND_DIR, "space_tile", 1, 2)
 	bridge_texture = load(BACKGROUND_DIR + "dessert_bridges.png")
@@ -98,6 +113,13 @@ func load_all() -> void:
 
 func random_background() -> Texture2D:
 	return background_textures.pick_random()
+
+func _ground_texture(kind: String, region: Rect2) -> AtlasTexture:
+	var texture := AtlasTexture.new()
+	texture.atlas = load("res://assets/ground/" + kind + ".png")
+	texture.region = region
+	texture.filter_clip = true
+	return texture
 
 func random_ground_tile() -> Texture2D:
 	return bridge_texture

@@ -45,6 +45,7 @@ func _dress_area(entry: Dictionary) -> void:
 	scenery.set_texture(texture)
 	scenery.set_visual_scale(Vector2.ONE * visual_scale)
 	scenery.rotation = 0.0
+	scenery.reset_structure()
 
 func _update_fixed_scenery() -> void:
 	var distance: float = scroll_source.distance if scroll_source != null else 0.0
@@ -64,8 +65,7 @@ func _create_scenery() -> Area2D:
 	return SceneryObjectScript.new()
 
 func rebuild_for_level(new_level: int) -> void:
-	for entry in scenery_entries:
-		scenery_pool.release(entry["scenery"])
-	scenery_entries.clear()
 	AssetDB.switch_to_level(new_level)
-	_build_fixed_scenery()
+	# Preserve damage and craters on the visible terrain through sector transitions.
+	if scenery_entries.is_empty():
+		_build_fixed_scenery()

@@ -1,0 +1,23 @@
+# Ground combat assets
+
+Generated with the built-in image generation tool. Original transparent PNGs are preserved in this folder; AtlasTexture regions remove unused padding at runtime. Buildings extend the existing three desert buildings; none were replaced.
+
+## hangar.png
+
+Production game sprite: one compact desert aircraft maintenance hangar: long pale sand-colored corrugated barrel roof, small roof vents, wide dark closed door along south edge. Single isolated object on truly transparent background. Orthographic almost straight overhead camera, 85 degrees elevation, mostly roof/top surfaces with minimal south wall. Detailed realistic hand-painted aerial desert military game art matching warm pale sandstone, dusty tan concrete and muted steel. Sunlight upper right, short soft contact shadow lower left. No cartoon outlines, no text, no terrain tile, no square background, no borders. Centered object in middle 75 percent of square canvas with ample transparent margins. Readable at 100-180px in game. Weathered materials and realistic proportions, clean alpha silhouette.
+
+## fuel_depot.png
+
+Production game sprite: one compact desert fuel depot: three round steel fuel tanks, connecting pipes, small beige utility shed, clustered rectangular footprint. Single isolated object on truly transparent background. Orthographic almost straight overhead camera, 85 degrees elevation, mostly roof/top surfaces with minimal south wall. Detailed realistic hand-painted aerial desert military game art matching warm pale sandstone, dusty tan concrete and muted steel. Sunlight upper right, short soft contact shadow lower left. No cartoon outlines, no text, no terrain tile, no square background, no borders. Centered object in middle 75 percent of square canvas with ample transparent margins. Readable at 100-180px in game. Weathered materials and realistic proportions, clean alpha silhouette.
+
+## tank.png
+
+Production game sprite: one desert military tank, tan angular armor, dark tracks on left and right, central turret and long gun barrel pointing straight UP toward image top, narrow vertical vehicle silhouette. Single isolated object on truly transparent background. Orthographic almost straight overhead camera, 85 degrees elevation, mostly roof/top surfaces with minimal south wall. Detailed realistic hand-painted aerial desert military game art matching warm pale sandstone, dusty tan concrete and muted steel. Sunlight upper right, short soft contact shadow lower left. No cartoon outlines, no text, no terrain tile, no square background, no borders. Centered object in middle 75 percent of square canvas with ample transparent margins. Readable at 100-180px in game. Weathered materials and realistic proportions, clean alpha silhouette.
+
+## truck.png
+
+Production game sprite: one desert armed military truck, tan cab at TOP facing UP, four or six dark tires, open rear bed with mounted compact anti-aircraft gun pointing UP, narrow vertical vehicle silhouette. Single isolated object on truly transparent background. Orthographic almost straight overhead camera, 85 degrees elevation, mostly roof/top surfaces with minimal south wall. Detailed realistic hand-painted aerial desert military game art matching warm pale sandstone, dusty tan concrete and muted steel. Sunlight upper right, short soft contact shadow lower left. No cartoon outlines, no text, no terrain tile, no square background, no borders. Centered object in middle 75 percent of square canvas with ample transparent margins. Readable at 100-180px in game. Weathered materials and realistic proportions, clean alpha silhouette.
+
+## crater.png
+
+Production game sprite: one beautiful irregular bomb crater in sandstone soil, dark charcoal recessed center, broken radial rock strata and fractured concrete fragments, dusty raised ochre rim, scattered small debris and scorch marks feathering into transparency, completely overhead circular silhouette, no flames no smoke. Single isolated object on truly transparent background. Orthographic almost straight overhead camera, 85 degrees elevation, mostly roof/top surfaces with minimal south wall. Detailed realistic hand-painted aerial desert military game art matching warm pale sandstone, dusty tan concrete and muted steel. Sunlight upper right, short soft contact shadow lower left. No cartoon outlines, no text, no terrain tile, no square background, no borders. Centered object in middle 75 percent of square canvas with ample transparent margins. Readable at 100-180px in game. Rim fades naturally into transparent alpha at the outermost scattered dust; no hard circular cutout.
