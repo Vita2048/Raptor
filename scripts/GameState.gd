@@ -25,6 +25,7 @@ var structures_destroyed := 0
 var vehicles_destroyed := 0
 var shots_fired := 0
 var armor_lost := 0
+var dodges := 0
 # Sector-entry checkpoint: dying retries the current sector instead of the whole run.
 var checkpoint_level := 1
 var checkpoint_score := 0
@@ -33,6 +34,7 @@ var checkpoint_ships := 0
 var checkpoint_structures := 0
 var checkpoint_vehicles := 0
 var checkpoint_shots := 0
+var checkpoint_dodges := 0
 var checkpoint_elapsed := 0.0
 var checkpoint_next_boss := BOSS_INTERVAL
 
@@ -45,6 +47,7 @@ func reset(preserve_checkpoint := false) -> void:
 	vehicles_destroyed = 0
 	shots_fired = 0
 	armor_lost = 0
+	dodges = 0
 	score = 0
 	player_health = player_max_health
 	boss_active = false
@@ -59,6 +62,7 @@ func reset(preserve_checkpoint := false) -> void:
 		checkpoint_structures = 0
 		checkpoint_vehicles = 0
 		checkpoint_shots = 0
+		checkpoint_dodges = 0
 		checkpoint_elapsed = 0.0
 		checkpoint_next_boss = BOSS_INTERVAL
 	score_changed.emit(score)
@@ -70,6 +74,12 @@ func add_score(amount: int) -> void:
 		return
 	score += amount
 	score_changed.emit(score)
+
+func record_graze(score_value := 10) -> void:
+	if not game_active:
+		return
+	dodges += 1
+	add_score(score_value)
 
 func damage_player(amount: int) -> void:
 	if not game_active:
@@ -115,6 +125,7 @@ func record_checkpoint() -> void:
 	checkpoint_structures = structures_destroyed
 	checkpoint_vehicles = vehicles_destroyed
 	checkpoint_shots = shots_fired
+	checkpoint_dodges = dodges
 	checkpoint_elapsed = elapsed_seconds
 	checkpoint_next_boss = next_boss_score
 
@@ -126,6 +137,7 @@ func restore_checkpoint() -> void:
 	structures_destroyed = checkpoint_structures
 	vehicles_destroyed = checkpoint_vehicles
 	shots_fired = checkpoint_shots
+	dodges = checkpoint_dodges
 	elapsed_seconds = checkpoint_elapsed
 	next_boss_score = checkpoint_next_boss
 	score_changed.emit(score)

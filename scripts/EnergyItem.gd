@@ -1,7 +1,7 @@
 extends Area2D
 
 const VIEW_SIZE := Vector2(1920, 1080)
-const ARMOR_RESTORE := 25
+const ARMOR_RESTORE := 15
 const FLOAT_SPEED := 1.8
 const FLOAT_AMPLITUDE := 14.0
 const DESCENT_SPEED := 95.0

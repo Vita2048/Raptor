@@ -95,11 +95,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			for offset in offsets:
 				nozzles.append({"position": Vector2(width * float(offset), -dimensions.y * 0.49), "length": 100.0 if is_boss else 44.0, "width": 20.0 if is_boss else 12.0})
 			_configure_exhausts(nozzles)
-			health = 10800 if is_boss else (62 if kind == "lancer" else 120)
+			health = 10800 if is_boss else (72 if kind == "lancer" else 140)
 			speed = 0.0 if is_boss else (360.0 if kind == "lancer" else 175.0)
-			score_value = 12000 if is_boss else (540 if kind == "lancer" else 850)
+			score_value = 12000 if is_boss else (690 if kind == "lancer" else 1080)
 			amplitude = 360.0 if is_boss else (140.0 if kind == "lancer" else 65.0)
-			fire_interval = 0.35 if is_boss else (1.05 if kind == "lancer" else 1.65)
+			fire_interval = 0.35 if is_boss else (0.9 if kind == "lancer" else 1.4)
 		"bomber":
 			sprite.texture = AssetDB.ship_textures["bomber"]
 			sprite.scale = Vector2.ONE * 0.85
@@ -154,11 +154,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-5, -50), "length": 48.0, "width": 13.0},
 				{"position": Vector2(8, -50), "length": 48.0, "width": 13.0}
 			])
-			health = 75
+			health = 88
 			speed = 285.0
-			score_value = 390
+			score_value = 500
 			amplitude = 88.0
-			fire_interval = 0.85
+			fire_interval = 0.75
 		"enemy5":
 			sprite.texture = AssetDB.ship_textures["enemy5"]
 			sprite.scale = Vector2.ONE * 0.78
@@ -169,11 +169,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-2, -64), "length": 62.0, "width": 15.0},
 				{"position": Vector2(14, -60), "length": 55.0, "width": 12.0}
 			])
-			health = 95
+			health = 110
 			speed = 225.0
-			score_value = 520
+			score_value = 660
 			amplitude = 140.0
-			fire_interval = 1.15
+			fire_interval = 1.0
 		"enemy6":
 			sprite.texture = AssetDB.ship_textures["enemy6"]
 			sprite.scale = Vector2.ONE * 0.71
@@ -183,11 +183,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-6, -71), "length": 52.0, "width": 12.0},
 				{"position": Vector2(8, -72), "length": 52.0, "width": 12.0}
 			])
-			health = 64
+			health = 75
 			speed = 370.0
-			score_value = 410
+			score_value = 520
 			amplitude = 70.0
-			fire_interval = 0.75
+			fire_interval = 0.65
 		"boss2":
 			sprite.texture = AssetDB.ship_textures["boss2"]
 			sprite.scale = Vector2.ONE * 0.5655
@@ -317,7 +317,7 @@ func _fire_pattern() -> void:
 			for angle in [-32.0, -16.0, 0.0, 16.0, 32.0]:
 				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, directions, 480.0 if enemy_type == "lancer" else 330.0, 12)
+		request_fire.emit(origin, directions, 500.0 if enemy_type == "lancer" else 350.0, 14)
 		return
 	if is_boss:
 		var directions: Array = []
@@ -354,17 +354,17 @@ func _fire_pattern() -> void:
 		# aggressive forward triple
 		var origin := global_position + Vector2(0, 52)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.18, 1.0).normalized(), Vector2.DOWN, Vector2(0.18, 1.0).normalized()], 540.0, 12)
+		request_fire.emit(origin, [Vector2(-0.18, 1.0).normalized(), Vector2.DOWN, Vector2(0.18, 1.0).normalized()], 560.0, 14)
 	elif enemy_type == "enemy5":
 		# wide spread + slow heavy
 		var origin := global_position + Vector2(0, 58)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.38, 1.0).normalized(), Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized(), Vector2(0.38, 1.0).normalized()], 350.0, 16)
+		request_fire.emit(origin, [Vector2(-0.38, 1.0).normalized(), Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized(), Vector2(0.38, 1.0).normalized()], 370.0, 18)
 	elif enemy_type == "enemy6":
 		# rapid narrow double
 		var origin := global_position + Vector2(0, 70)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.07, 1.0).normalized(), Vector2(0.07, 1.0).normalized()], 660.0, 11)
+		request_fire.emit(origin, [Vector2(-0.07, 1.0).normalized(), Vector2(0.07, 1.0).normalized()], 690.0, 13)
 	else:
 		var origin := global_position + Vector2(0, 48)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)

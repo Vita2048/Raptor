@@ -9,6 +9,7 @@ var trail: Line2D
 var core_trail: Line2D
 var sparkles: CPUParticles2D
 var impact_sent := false
+var graze_armed := false
 
 static var _shared_add_mat: CanvasItemMaterial
 
@@ -81,6 +82,7 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		GameState.shots_fired += 1
 	rotation = velocity.angle() + PI * 0.5
 	impact_sent = false
+	graze_armed = false
 	trail.clear_points()
 	core_trail.clear_points()
 	sparkles.emitting = true
@@ -184,6 +186,7 @@ func on_pool_released() -> void:
 	set_deferred("monitorable", false)
 	velocity = Vector2.ZERO
 	impact_sent = false
+	graze_armed = false
 	trail.clear_points()
 	core_trail.clear_points()
 	sparkles.emitting = false

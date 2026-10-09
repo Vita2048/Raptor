@@ -7,11 +7,15 @@ const VIEW_SIZE := Vector2(1920, 1080)
 const MAX_BANK_ANGLE := deg_to_rad(10.0)
 const BANK_RESPONSE := 10.0
 const INCOMING_DAMAGE_SCALE := 0.1
+const GRAZE_ARM_RADIUS := 140.0
+const GRAZE_RELEASE_RADIUS := 155.0
+const GRAZE_SCORE := 10
 
 var speed := 620.0
 var shoot_cooldown := 0.11
 var shoot_timer := 0.0
 var bullet_pool: ObjectPool
+var enemy_manager: Node = null
 var muzzle_offsets := [Vector2(-46, -104), Vector2(46, -104)]
 var sprite: Sprite2D
 var hit_material: ShaderMaterial
@@ -69,6 +73,7 @@ func _physics_process(delta: float) -> void:
 	sprite.position.y = move_toward(sprite.position.y, 0.0, delta * 38.0)
 	if not GameState.game_active:
 		return
+	_update_graze()
 	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 	position += input_vector * speed * delta
 	position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
@@ -92,6 +97,26 @@ func _physics_process(delta: float) -> void:
 			touch_indicator.scale = Vector2.ONE * (0.62 + pulse * 0.12)
 		else:
 			touch_indicator.modulate.a = move_toward(touch_indicator.modulate.a, 0.0, delta * 4.0)
+
+func _update_graze() -> void:
+	# Close-dodge bonus: an enemy bullet that enters the graze shell and leaves
+	# without hitting scores once. Hits never pay: pooling resets the flag.
+	if enemy_manager == null or not is_instance_valid(enemy_manager):
+		enemy_manager = get_parent().get_node_or_null("EnemyManager")
+		if enemy_manager == null:
+			return
+	var pool = enemy_manager.enemy_bullet_pool
+	if pool == null:
+		return
+	for bullet in pool.active:
+		if not is_instance_valid(bullet) or bullet.from_player:
+			continue
+		var dist: float = bullet.global_position.distance_to(global_position)
+		if dist < GRAZE_ARM_RADIUS:
+			bullet.graze_armed = true
+		elif bullet.graze_armed and dist > GRAZE_RELEASE_RADIUS:
+			bullet.graze_armed = false
+			GameState.record_graze(GRAZE_SCORE)
 
 func _input(event: InputEvent) -> void:
 	if not is_android:
