@@ -50,12 +50,12 @@ func _run() -> void:
 	assert(final_boss.enemy_type == "boss3" and final_boss.entrance_remaining == 0.0)
 	final_boss.set_physics_process(false)
 	manager.enemy_bullet_pool.release_all()
-	final_boss.volley_index = 2
+	final_boss.volley_index = 1
 	final_boss._fire_pattern()
-	assert(manager.enemy_bullet_pool.active.size() == 3)
+	assert(manager.enemy_bullet_pool.active.size() == 5)
 	final_boss.health = final_boss.max_health / 2 - 1
 	final_boss._fire_pattern()
-	assert(is_equal_approx(final_boss.fire_interval, 0.65))
+	assert(is_equal_approx(final_boss.fire_interval, 0.22))
 	await _capture("sector3-boss")
 	manager.enemy_bullet_pool.release_all()
 	final_boss.health = 18

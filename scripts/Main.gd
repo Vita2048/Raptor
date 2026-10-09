@@ -23,6 +23,16 @@ func _ready() -> void:
 	randomize()
 	GameState.reset()
 	_build_scene()
+	if preload("res://scripts/DebugOptions.gd").final_boss_requested():
+		_start_final_boss_debug()
+
+func _start_final_boss_debug() -> void:
+	GameState.advance_level()
+	GameState.advance_level()
+	world_spawner.rebuild_for_level(3)
+	hud.level_label.text = "SECTOR 03 / BOSS TEST"
+	# Use the real warning and entrance; don't fabricate score or previous kills.
+	enemy_manager._spawn_boss()
 
 func _build_scene() -> void:
 	_add_world_environment()

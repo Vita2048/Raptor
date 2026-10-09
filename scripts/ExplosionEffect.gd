@@ -104,48 +104,48 @@ func _play_fireball() -> void:
 
 func _emit_shockwave() -> void:
 	var count := randi_range(12, 18) if large_scale else randi_range(10, 15)
-	for i in range(count):
-		var angle := randf_range(0.0, TAU)
-		var emitter := _make_particle_emitter(
-			"WhitePuffShard",
-			AssetDB.random_particle("white_puff"),
-			1,
-			0.4,
-			Vector2(cos(angle), sin(angle)),
-			(randf_range(760.0, 1180.0) if large_scale else randf_range(650.0, 980.0)) * size_multiplier,
-			420.0,
-			0.045,
-			0.115,
-			Color(1.0, 0.96, 0.82, 0.9),
-			Color(1.0, 1.0, 1.0, 0.0)
-		)
-		shockwave_layer.add_child(emitter)
-		emitter.restart()
+	var angle := randf_range(0.0, TAU)
+	var emitter := _make_particle_emitter(
+		"WhitePuffShard",
+		AssetDB.random_particle("white_puff"),
+		count,
+		0.4,
+		Vector2(cos(angle), sin(angle)),
+		(randf_range(760.0, 1180.0) if large_scale else randf_range(650.0, 980.0)) * size_multiplier,
+		420.0,
+		0.045,
+		0.115,
+		Color(1.0, 0.96, 0.82, 0.9),
+		Color(1.0, 1.0, 1.0, 0.0)
+	)
+	shockwave_layer.add_child(emitter)
+	emitter.restart()
 
 func _emit_smoke_delayed() -> void:
 	await get_tree().create_timer(0.1).timeout
 	var count := randi_range(16, 22) if large_scale else randi_range(15, 20)
-	for i in range(count):
-		var drift := Vector2(randf_range(-0.35, 0.35), -1.0).normalized()
-		var emitter := _make_particle_emitter(
-			"BlackSmokeTrail",
-			AssetDB.random_particle("black_smoke"),
-			1,
-			randf_range(1.0, 1.5),
-			drift,
-			(randf_range(145.0, 240.0) if large_scale else randf_range(105.0, 180.0)) * size_multiplier,
-			28.0,
-			0.055,
-			0.16,
-			Color(0.12, 0.12, 0.12, 0.72),
-			Color(0.05, 0.05, 0.05, 0.0),
-			(Vector2(randf_range(-210.0, 210.0), randf_range(-190.0, 190.0)) * size_multiplier) if large_scale else Vector2(randf_range(-34.0, 34.0), randf_range(-18.0, 24.0))
-		)
-		smoke_layer.add_child(emitter)
-		emitter.restart()
+	var drift := Vector2(randf_range(-0.35, 0.35), -1.0).normalized()
+	var emitter := _make_particle_emitter(
+		"BlackSmokeTrail",
+		AssetDB.random_particle("black_smoke"),
+		count,
+		randf_range(1.0, 1.5),
+		drift,
+		(randf_range(145.0, 240.0) if large_scale else randf_range(105.0, 180.0)) * size_multiplier,
+		28.0,
+		0.055,
+		0.16,
+		Color(0.12, 0.12, 0.12, 0.72),
+		Color(0.05, 0.05, 0.05, 0.0),
+		(Vector2(randf_range(-210.0, 210.0), randf_range(-190.0, 190.0)) * size_multiplier) if large_scale else Vector2(randf_range(-34.0, 34.0), randf_range(-18.0, 24.0))
+	)
+	smoke_layer.add_child(emitter)
+	emitter.restart()
 
-func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int, particle_lifetime: float, direction: Vector2, speed: float, damping: float, scale_min: float, scale_max: float, start_color: Color, end_color: Color, offset := Vector2.ZERO) -> GPUParticles2D:
-	var particles := GPUParticles2D.new()
+func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int, particle_lifetime: float, direction: Vector2, speed: float, damping: float, scale_min: float, scale_max: float, start_color: Color, end_color: Color, offset := Vector2.ZERO) -> CPUParticles2D:
+	# Two batched CPU emitters avoid dozens of GPU systems/material uploads per blast,
+	# especially costly on single-threaded WebGL builds.
+	var particles := CPUParticles2D.new()
 	particles.name = layer_name
 	particles.position = offset
 	particles.texture = texture
@@ -157,27 +157,26 @@ func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int,
 	particles.local_coords = false
 	particles.emitting = false
 
-	var material := ParticleProcessMaterial.new()
-	material.direction = Vector3(direction.x, direction.y, 0.0)
-	material.spread = 12.0
+	var material := particles
+	material.direction = direction
+	material.spread = 28.0 if layer_name == "BlackSmokeTrail" else 180.0
 	material.initial_velocity_min = speed * 0.72
 	material.initial_velocity_max = speed
 	material.damping_min = damping
 	material.damping_max = damping * 1.25
 	material.angular_velocity_min = -260.0
 	material.angular_velocity_max = 260.0
-	material.scale_min = scale_min * (1.08 if large_scale else 1.0) * size_multiplier
-	material.scale_max = scale_max * (1.08 if large_scale else 1.0) * size_multiplier
+	material.scale_amount_min = scale_min * (1.08 if large_scale else 1.0) * size_multiplier
+	material.scale_amount_max = scale_max * (1.08 if large_scale else 1.0) * size_multiplier
 	if layer_name == "BlackSmokeTrail":
-		material.gravity = Vector3(0.0, MAP_SCROLL_SPEED * 0.34, 0.0)
+		material.gravity = Vector2(0.0, MAP_SCROLL_SPEED * 0.34)
+		material.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		material.emission_rect_extents = Vector2(130, 100) * size_multiplier if large_scale else Vector2(34, 24) * size_multiplier
 	else:
-		material.gravity = Vector3.ZERO
+		material.gravity = Vector2.ZERO
 
 	var gradient := Gradient.new()
 	gradient.set_color(0, start_color)
 	gradient.set_color(1, end_color)
-	var gradient_texture := GradientTexture1D.new()
-	gradient_texture.gradient = gradient
-	material.color_ramp = gradient_texture
-	particles.process_material = material
+	material.color_ramp = gradient
 	return particles

@@ -28,6 +28,7 @@ var crater_texture: Texture2D
 
 func _ready() -> void:
 	load_all()
+	preload("res://scripts/EnergyItem.gd").warm_up()
 
 func load_all() -> void:
 	# Alpha bounds above 8% exclude nearly invisible generator edge noise.

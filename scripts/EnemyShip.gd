@@ -6,6 +6,11 @@ signal request_fire(origin: Vector2, directions: Array, speed: float, damage: in
 
 const ExhaustPlumeScript := preload("res://scripts/ExhaustPlume.gd")
 const VIEW_SIZE := Vector2(1920, 1080)
+const BOSS_COLLISIONS := {
+	"boss": preload("res://assets/collision/boss.tres"),
+	"boss2": preload("res://assets/collision/boss2.tres"),
+	"boss3": preload("res://assets/collision/boss3.tres")
+}
 
 var enemy_type := "interceptor"
 var health := 40
@@ -22,7 +27,7 @@ var sprite: Sprite2D
 var hit_material: ShaderMaterial
 var hit_strength := 0.0
 var collision_shape: CollisionShape2D
-var silhouette_collision_polygons: Array[CollisionPolygon2D] = []
+var silhouette_collision_polygons: Array[CollisionShape2D] = []
 var is_boss := false
 var is_dead := false
 var volley_index := 0
@@ -90,11 +95,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			for offset in offsets:
 				nozzles.append({"position": Vector2(width * float(offset), -dimensions.y * 0.49), "length": 100.0 if is_boss else 44.0, "width": 20.0 if is_boss else 12.0})
 			_configure_exhausts(nozzles)
-			health = 6800 if is_boss else (62 if kind == "lancer" else 120)
+			health = 10800 if is_boss else (62 if kind == "lancer" else 120)
 			speed = 0.0 if is_boss else (360.0 if kind == "lancer" else 175.0)
 			score_value = 12000 if is_boss else (540 if kind == "lancer" else 850)
-			amplitude = 170.0 if is_boss else (140.0 if kind == "lancer" else 65.0)
-			fire_interval = 0.85 if is_boss else (1.05 if kind == "lancer" else 1.65)
+			amplitude = 360.0 if is_boss else (140.0 if kind == "lancer" else 65.0)
+			fire_interval = 0.35 if is_boss else (1.05 if kind == "lancer" else 1.65)
 		"bomber":
 			sprite.texture = AssetDB.ship_textures["bomber"]
 			sprite.scale = Vector2.ONE * 0.85
@@ -230,6 +235,10 @@ func _physics_process(delta: float) -> void:
 		return
 	if is_boss:
 		var target := Vector2(base_x + sin(Time.get_ticks_msec() * 0.0014) * amplitude, 280.0)
+		if enemy_type == "boss3":
+			var phase_speed := 2.0 + (1.0 - float(health) / max_health) * 0.7
+			phase += delta * phase_speed
+			target = Vector2(base_x + sin(phase) * amplitude, 280.0 + sin(phase * 0.5) * 35.0)
 		position = position.lerp(target, 1.9 * delta)
 	else:
 		position.y += speed * delta
@@ -271,22 +280,32 @@ func _fire_pattern() -> void:
 	if enemy_type == "boss3":
 		var origin := global_position + _muzzle_position()
 		var directions: Array = []
-		var furious := health < max_health / 2
-		if volley_index % 3 == 2:
+		var furious := health < max_health * 0.55
+		var critical := health < max_health * 0.25
+		if volley_index % 2 == 1:
 			var player: Node2D = get_parent().player
 			var aim: Vector2 = (player.global_position - origin).normalized() if player else Vector2.DOWN
-			for angle in [-12.0, 0.0, 12.0]:
+			for angle in [-24.0, -12.0, 0.0, 12.0, 24.0]:
 				directions.append(aim.rotated(deg_to_rad(angle)))
 		else:
 			# Alternating fans leave a moving, readable gap; avoid a solid bullet wall.
-			var gap := -20.0 if volley_index % 3 == 0 else 20.0
-			for angle in [-70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0]:
-				if absf(angle - gap) > 16.0:
+			var gap := -24.0 if volley_index % 4 == 0 else 24.0
+			for angle in [-72.0, -60.0, -48.0, -36.0, -24.0, -12.0, 0.0, 12.0, 24.0, 36.0, 48.0, 60.0, 72.0]:
+				if absf(angle - gap) > 12.0:
 					directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
+		# Wing cannons add slower aimed pressure between the central volleys.
+		if furious and volley_index % 2 == 0:
+			var player: Node2D = get_parent().player
+			for side in [-1.0, 1.0]:
+				var wing_origin := global_position + Vector2(side * 165.0, 95.0)
+				var aim: Vector2 = (player.global_position - wing_origin).normalized() if player else Vector2.DOWN
+				VFX.muzzle_flash(wing_origin, aim, false)
+				request_fire.emit(wing_origin, [aim], 360.0, 70)
 		volley_index += 1
-		fire_interval = 0.65 if furious else 0.85
+		fire_interval = 0.12 if critical else (0.22 if furious else 0.35)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, directions, 470.0 if furious else 410.0, 18)
+		# PlayerShip applies its 0.1 incoming damage scale: these hit for 8 armor.
+		request_fire.emit(origin, directions, 610.0 if critical else (560.0 if furious else 510.0), 25)
 		return
 	if enemy_type in ["lancer", "sentinel"]:
 		var origin := global_position + _muzzle_position()
@@ -369,8 +388,6 @@ func _on_area_entered(area: Area2D) -> void:
 	if area.has_method("is_player_damage") and area.is_player_damage():
 		var damage: int = area.damage
 		var impact_pos := area.global_position
-		if is_boss and area.has_method("velocity"):
-			impact_pos = _get_visual_impact_point(impact_pos, area.velocity)
 		if area.has_method("spawn_impact"):
 			area.spawn_impact(impact_pos)
 		if area.has_method("return_to_pool"):
@@ -410,51 +427,21 @@ func _configure_silhouette_collision(fallback_radius: float) -> void:
 	_clear_silhouette_collision()
 	(collision_shape.shape as CircleShape2D).radius = fallback_radius
 	collision_shape.disabled = true
-	if sprite == null or sprite.texture == null:
-		collision_shape.disabled = false
-		return
-
-	var img: Image = sprite.texture.get_image()
-	if img == null:
-		collision_shape.disabled = false
-		return
-	if img.is_compressed():
-		img.decompress()
-
-	var bitmap := BitMap.new()
-	bitmap.create_from_image_alpha(img, 0.08)
-	var tex_size := Vector2(img.get_width(), img.get_height())
-	var polygons := bitmap.opaque_to_polygons(Rect2(Vector2.ZERO, tex_size), 2.0)
-	for polygon in polygons:
-		if _polygon_area(polygon) < 96.0:
-			continue
-		var collider := CollisionPolygon2D.new()
-		var scaled_polygon := PackedVector2Array()
-		for point in polygon:
-			scaled_polygon.append((point - tex_size * 0.5) * sprite.scale)
-		collider.polygon = scaled_polygon
+	var data: Resource = BOSS_COLLISIONS[enemy_type]
+	for shape in data.shapes:
+		var collider := CollisionShape2D.new()
+		collider.shape = shape
+		collider.scale = sprite.scale
 		add_child(collider)
 		silhouette_collision_polygons.append(collider)
-
 	if silhouette_collision_polygons.is_empty():
 		collision_shape.disabled = false
-
 func _clear_silhouette_collision() -> void:
 	for collider in silhouette_collision_polygons:
 		if is_instance_valid(collider):
 			collider.disabled = true
 			collider.queue_free()
 	silhouette_collision_polygons.clear()
-
-func _polygon_area(polygon: PackedVector2Array) -> float:
-	if polygon.size() < 3:
-		return 0.0
-	var area := 0.0
-	for i in range(polygon.size()):
-		var a := polygon[i]
-		var b := polygon[(i + 1) % polygon.size()]
-		area += a.x * b.y - b.x * a.y
-	return abs(area) * 0.5
 
 func _configure_exhausts(configs: Array) -> void:
 	while exhaust_plumes.size() < configs.size():
@@ -469,53 +456,3 @@ func _configure_exhausts(configs: Array) -> void:
 		var config: Dictionary = configs[i]
 		exhaust.position = config["position"]
 		exhaust.configure(config["length"], config["width"], PI)
-
-# Returns the point where the bullet visually touches the actual painted silhouette of the ship.
-# Uses ray marching + alpha sampling on the sprite texture so explosions appear exactly on the ship, not in transparent areas.
-func _get_visual_impact_point(bullet_pos: Vector2, bullet_vel: Vector2) -> Vector2:
-	if sprite == null or sprite.texture == null:
-		return bullet_pos
-
-	var dir := bullet_vel.normalized()
-	if dir.length_squared() < 0.0001:
-		return bullet_pos
-
-	var img: Image = sprite.texture.get_image()
-	if img == null:
-		return bullet_pos
-
-	# Make sure we can read pixels (convert if compressed)
-	if img.is_compressed():
-		img.decompress()
-
-	var tex_size := Vector2(img.get_width(), img.get_height())
-	var world_scale: float = max(abs(sprite.global_scale.x), abs(sprite.global_scale.y))
-
-	# Step roughly every 4-5 texture pixels, expressed in world units.
-	var step: float = max(1.5, 4.5 * max(world_scale, 0.01))
-	var max_dist: float = tex_size.length() * max(world_scale, 0.01) + 80.0
-	var pos := bullet_pos
-	var traveled := 0.0
-
-	while traveled < max_dist:
-		var local := sprite.to_local(pos) + tex_size * 0.5
-
-		if local.x < 0 or local.y < 0 or local.x >= tex_size.x or local.y >= tex_size.y:
-			# Still outside the texture bounds — keep marching
-			pos += dir * step
-			traveled += step
-			continue
-
-		# Sample alpha at this pixel
-		var px := int(clamp(local.x, 0, tex_size.x - 1))
-		var py := int(clamp(local.y, 0, tex_size.y - 1))
-		var alpha := img.get_pixel(px, py).a
-
-		if alpha > 0.08:   # threshold for "solid" ship pixel
-			return pos
-
-		pos += dir * step
-		traveled += step
-
-	# Fallback to original position if we never found opaque pixel (shouldn't happen)
-	return bullet_pos

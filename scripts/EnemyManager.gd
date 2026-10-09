@@ -102,7 +102,7 @@ func _on_enemy_destroyed(pos: Vector2, score_value: int, was_boss: bool) -> void
 	if not was_boss:
 		_spawn_explosion(pos)
 		if randf() < 0.20:
-			_spawn_energy_item(pos)
+			_spawn_energy_item.call_deferred(pos)
 
 func _on_boss_destroyed(pos: Vector2) -> void:
 	if not GameState.game_active:

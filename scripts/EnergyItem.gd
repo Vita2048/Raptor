@@ -6,6 +6,12 @@ const FLOAT_SPEED := 1.8
 const FLOAT_AMPLITUDE := 14.0
 const DESCENT_SPEED := 95.0
 const GLOW_CYCLE := 2.2
+const ENERGY_TEXTURE := preload("res://assets/items/energy.png")
+static var radial_light_texture: ImageTexture
+
+static func warm_up() -> void:
+	if radial_light_texture == null:
+		radial_light_texture = _make_radial_gradient_texture(128)
 
 var sprite: Sprite2D
 var glow_sprite: Sprite2D
@@ -24,7 +30,7 @@ func _ready() -> void:
 
 	# --- glow backdrop sprite (larger, blurred look via colour) ---
 	glow_sprite = Sprite2D.new()
-	glow_sprite.texture = load("res://assets/items/energy.png")
+	glow_sprite.texture = ENERGY_TEXTURE
 	glow_sprite.scale = Vector2.ONE * 0.68
 	glow_sprite.modulate = Color(0.25, 0.75, 3.5, 0.38)
 	glow_sprite.z_index = -1
@@ -32,14 +38,15 @@ func _ready() -> void:
 
 	# --- main sprite ---
 	sprite = Sprite2D.new()
-	sprite.texture = load("res://assets/items/energy.png")
+	sprite.texture = ENERGY_TEXTURE
 	sprite.scale = Vector2.ONE * 0.44
 	sprite.modulate = Color(0.7, 2.0, 4.0, 1.0)
 	add_child(sprite)
 
 	# --- point light for real glow ---
 	light = PointLight2D.new()
-	light.texture = _make_radial_gradient_texture(128)
+	warm_up()
+	light.texture = radial_light_texture
 	light.energy = 1.85
 	light.color = Color(0.18, 0.55, 1.0)
 	light.texture_scale = 3.2
@@ -119,7 +126,7 @@ func _play_pickup_burst(pos: Vector2) -> void:
 	ring.queue_free()
 
 # Build a simple white radial gradient texture for the PointLight2D
-func _make_radial_gradient_texture(size: int) -> ImageTexture:
+static func _make_radial_gradient_texture(size: int) -> ImageTexture:
 	var img := Image.create(size, size, false, Image.FORMAT_RGBA8)
 	var centre := Vector2(size * 0.5, size * 0.5)
 	var radius := size * 0.5
