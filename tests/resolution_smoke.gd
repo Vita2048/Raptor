@@ -14,6 +14,11 @@ func _run() -> void:
 	current_scene = scene
 	await physics_frame
 	assert(scene.pause_menu.resolution_buttons.size() == 3)
+	# Desktop dialog geometry is untouched by the mobile-only rework.
+	assert(scene.pause_menu.dialog_panel.size.is_equal_approx(Vector2(660, 560)))
+	assert(scene.pause_menu.volume_slider.size.is_equal_approx(Vector2(580, 32)))
+	assert(scene.pause_menu.mute_button.position.is_equal_approx(Vector2(40, 380)))
+	assert(scene.pause_menu.resume_button.position.is_equal_approx(Vector2(40, 458)))
 	# Apply persists and takes effect; restore the default afterwards.
 	menu_script.apply_resolution(Vector2i(1280, 720))
 	assert(DisplayServer.window_get_size() == Vector2i(1280, 720))
@@ -23,5 +28,6 @@ func _run() -> void:
 	menu_script.apply_resolution(Vector2i(1920, 1080))
 	assert(DisplayServer.window_get_size() == Vector2i(1920, 1080))
 	assert(menu_script.saved_resolution() == Vector2i(1920, 1080))
+	assert(scene.pause_menu.resume_button.position.y == scene.pause_menu.exit_button.position.y)
 	print("RESOLUTION_OK: parse, apply, persist, highlight, restore")
 	quit()

@@ -68,6 +68,20 @@ full-speed play and recording, close the editor and run the game binary:
 & 'C:\Temp\Godot\Godot_v4.7-stable_win64.exe' --path 'C:\Temp\Raptor'
 ```
 
+## Mobile (Android/iOS)
+
+- Hold a finger anywhere to fire (multi-touch safe; releases missed while
+  paused are re-anchored so firing can't stick); drag anywhere to steer (touch
+  coordinates are converted through the canvas stretch, so drags track on
+  phones). Covered by `res://tests/mobile_smoke.gd` via `force_touch`.
+- Armor/score/sound/boss HUDs and the capture overlay render 1.5x
+  (`force_mobile` in tests); the pause menu itself is unchanged.
+- A subtle MENU button (same styling as the other HUDs) sits at the projected
+  bottom-left corner and opens the pause menu (ESC on desktop); it hides on
+  the end-of-run screens. The pause dialog is 1.25x, centered, and drops the
+  ESC/S/R key hints on mobile. Game-over/victory/boss-warning popups also
+  center in the real viewport instead of fixed design coords.
+
 ## Resolution (pause menu)
 
 `ESC` offers 1920×1080, 1600×900, and 1280×720 (windowed, saved across runs).

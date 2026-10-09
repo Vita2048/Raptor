@@ -5,6 +5,7 @@ var max_health := 100
 var displayed_ratio := 1.0
 var damage_trail := 1.0
 var flash_time := 0.0
+var ui := 1.0  # set by HUD: 1.5 on mobile
 
 func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -27,14 +28,14 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	var font := ThemeDB.fallback_font
 	var accent := Color("86d8de") if float(health) / max_health > 0.3 else Color("f1a16f")
-	draw_string(font, Vector2(0, 20), "SHIP ARMOR", HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color("95a9b1"))
-	draw_string(font, Vector2(size.x - 85, 20), "%03d / %03d" % [health, max_health], HORIZONTAL_ALIGNMENT_RIGHT, 85, 16, Color("e8efed"))
-	var slot := Rect2(0, 36, size.x, 10)
+	draw_string(font, Vector2(0, 20 * ui), "SHIP ARMOR", HORIZONTAL_ALIGNMENT_LEFT, -1, int(16 * ui), Color("95a9b1"))
+	draw_string(font, Vector2(size.x - 85 * ui, 20 * ui), "%03d / %03d" % [health, max_health], HORIZONTAL_ALIGNMENT_RIGHT, 85 * ui, int(16 * ui), Color("e8efed"))
+	var slot := Rect2(0, 36 * ui, size.x, 10 * ui)
 	draw_rect(slot, Color("293740"))
-	draw_rect(Rect2(slot.position, Vector2(size.x * damage_trail, 10)), Color("ac7656"))
-	draw_rect(Rect2(slot.position, Vector2(size.x * displayed_ratio, 10)), accent)
+	draw_rect(Rect2(slot.position, Vector2(size.x * damage_trail, 10 * ui)), Color("ac7656"))
+	draw_rect(Rect2(slot.position, Vector2(size.x * displayed_ratio, 10 * ui)), accent)
 	for i in range(1, 10):
 		var x := size.x * float(i) / 10.0
-		draw_line(Vector2(x, 36), Vector2(x, 46), Color("101c25"), 3.0)
+		draw_line(Vector2(x, 36 * ui), Vector2(x, 46 * ui), Color("101c25"), 3.0 * ui)
 	if health <= max_health * 0.3:
-		draw_string(font, Vector2(0, 65), "ARMOR CRITICAL", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, accent)
+		draw_string(font, Vector2(0, 65 * ui), "ARMOR CRITICAL", HORIZONTAL_ALIGNMENT_LEFT, -1, int(13 * ui), accent)

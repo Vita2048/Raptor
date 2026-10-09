@@ -22,10 +22,12 @@ var hit_material: ShaderMaterial
 var hit_strength := 0.0
 var previous_health := 100
 
-# Touch/Android Controls
-var is_android := false
-var auto_shoot := false
+# Touch controls (phones/tablets; also desktops with a touchscreen).
+var is_touch := false
+var force_touch := false  # headless-test hook: exercise touch paths on desktop
 var touch_indicator: Sprite2D
+# Fingers currently held down; the ship fires while at least one is held.
+var _touches := 0
 
 func _ready() -> void:
 	collision_layer = 1
@@ -57,9 +59,9 @@ func _ready() -> void:
 	bullet_pool = ObjectPool.new(_create_bullet, get_parent(), 80)
 	area_entered.connect(_on_area_entered)
 
-	is_android = OS.has_feature("android") or OS.get_name() == "Android" or DisplayServer.is_touchscreen_available()
+	is_touch = OS.has_feature("android") or OS.has_feature("ios") or OS.has_feature("mobile") or DisplayServer.is_touchscreen_available()
 
-	if is_android:
+	if is_touch:
 		touch_indicator = Sprite2D.new()
 		touch_indicator.texture = load("res://assets/items/energy.png")
 		touch_indicator.scale = Vector2.ONE * 0.55
@@ -72,6 +74,7 @@ func _physics_process(delta: float) -> void:
 	hit_material.set_shader_parameter("hit_amount", hit_strength)
 	sprite.position.y = move_toward(sprite.position.y, 0.0, delta * 38.0)
 	if not GameState.game_active:
+		_touches = 0
 		return
 	_update_graze()
 	var input_vector := Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
@@ -79,18 +82,18 @@ func _physics_process(delta: float) -> void:
 	position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
 	position.y = clamp(position.y, 610.0, VIEW_SIZE.y - 95.0)
 
-	if input_vector.x != 0.0 or not is_android:
+	if input_vector.x != 0.0 or not is_touch:
 		rotation = lerp_angle(rotation, input_vector.x * MAX_BANK_ANGLE, min(delta * BANK_RESPONSE, 1.0))
 
 	shoot_timer = max(shoot_timer - delta, 0.0)
-	var wants_to_shoot := Input.is_action_pressed("fire") or (is_android and auto_shoot)
+	var wants_to_shoot := Input.is_action_pressed("fire") or ((is_touch or force_touch) and _touches > 0)
 	if wants_to_shoot and shoot_timer <= 0.0:
 		_shoot()
 		shoot_timer = shoot_cooldown
 
-	# Update active automatic shooting halo indicator
-	if is_android and touch_indicator:
-		if auto_shoot:
+	# Firing halo while any finger is held down.
+	if (is_touch or force_touch) and touch_indicator:
+		if _touches > 0:
 			var pulse := 0.45 + sin(Time.get_ticks_msec() * 0.012) * 0.2
 			touch_indicator.modulate = Color(0.1, 0.8, 4.0, pulse * 0.85)
 			touch_indicator.rotation += delta * 1.6
@@ -118,41 +121,41 @@ func _update_graze() -> void:
 			bullet.graze_armed = false
 			GameState.record_graze(GRAZE_SCORE)
 
+func _drag_to_canvas(relative: Vector2) -> Vector2:
+	# Drag deltas are viewport pixels too; only the stretch scale applies.
+	var s := get_viewport().get_canvas_transform().x.length()
+	if s <= 0.0:
+		return relative
+	return relative / s
+
+func reset_touch() -> void:
+	# Called when the pause menu opens/closes: releases missed while paused
+	# never arrive, so the count is re-anchored to avoid stuck firing.
+	_touches = 0
+
 func _input(event: InputEvent) -> void:
-	if not is_android:
+	if not (is_touch or force_touch):
+		return
+	if not GameState.game_active:
+		_touches = 0
 		return
 
 	if event is InputEventScreenTouch:
+		# The ship fires as long as any finger is held down (multi-touch safe).
 		if event.pressed:
-			var local_pos := to_local(event.position)
-			# Touch tapping detection window within 95px around ship
-			if local_pos.length() <= 95.0:
-				auto_shoot = not auto_shoot
-				_play_toggle_flash()
+			_touches += 1
+		else:
+			_touches = maxi(0, _touches - 1)
 
 	elif event is InputEventScreenDrag:
 		# Swiping/dragging moves the ship smoothly relative to touch drag
-		position += event.relative
+		position += _drag_to_canvas(event.relative)
 		position.x = clamp(position.x, 70.0, VIEW_SIZE.x - 70.0)
 		position.y = clamp(position.y, 610.0, VIEW_SIZE.y - 95.0)
 
 		# Custom drag bank rotation mapping based on touch drag direction
 		var target_bank := clampf(event.relative.x * 0.18, -1.0, 1.0) * MAX_BANK_ANGLE
 		rotation = lerp_angle(rotation, target_bank, 0.22)
-
-func _play_toggle_flash() -> void:
-	var flash := Sprite2D.new()
-	flash.texture = sprite.texture
-	flash.scale = sprite.scale
-	flash.modulate = Color(2.0, 2.5, 5.0, 1.0)
-	flash.z_index = 10
-	add_child(flash)
-	var tw := flash.create_tween()
-	tw.set_parallel(true)
-	tw.tween_property(flash, "scale", sprite.scale * 1.6, 0.22).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
-	tw.tween_property(flash, "modulate:a", 0.0, 0.22).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	await tw.finished
-	flash.queue_free()
 
 func _shoot() -> void:
 	sprite.position.y = 2.5

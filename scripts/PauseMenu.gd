@@ -11,11 +11,18 @@ const AMBER := Color("efb26e")
 const SETTINGS_PATH := "user://settings.cfg"
 const RESOLUTIONS: Array[Vector2i] = [Vector2i(1920, 1080), Vector2i(1600, 900), Vector2i(1280, 720)]
 
+static func is_mobile() -> bool:
+	return OS.has_feature("android") or OS.has_feature("ios")
+
 var root: Control
+var dialog_panel: Panel
+var dlg := 1.0
+var force_mobile := false  # headless-test hook: build mobile-sized dialog
 var volume_slider: HSlider
 var volume_value_label: Label
 var mute_button: Button
 var resume_button: Button
+var exit_button: Button
 var resolution_buttons: Array[Button] = []
 var is_open := false
 var _updating_slider := false
@@ -66,7 +73,11 @@ static func apply_saved_resolution() -> void:
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	layer = 50
+	if force_mobile or is_mobile():
+		dlg = 1.25
 	_build_ui()
+	root.resized.connect(_center_dialog)
+	_center_dialog()
 	set_open(false, false)
 	_connect_audio_signals()
 
@@ -92,6 +103,7 @@ func toggle() -> void:
 
 func set_open(value: bool, pause_tree := true) -> void:
 	is_open = value
+	_reset_ship_touch()
 	if root:
 		root.visible = is_open
 	if pause_tree:
@@ -101,6 +113,12 @@ func set_open(value: bool, pause_tree := true) -> void:
 		_refresh_resolution_buttons()
 		if resume_button:
 			resume_button.grab_focus()
+
+func _reset_ship_touch() -> void:
+	# Releases missed while paused never arrive; re-anchor so firing can't stick.
+	var ship := get_parent().get_node_or_null("PlayerShip")
+	if ship != null and ship.has_method("reset_touch"):
+		ship.reset_touch()
 
 func _connect_audio_signals() -> void:
 	if VFX == null or VFX.get("audio") == null:
@@ -131,10 +149,23 @@ func _style(color: Color, border: Color = Color("344953")) -> StyleBoxFlat:
 	style.set_corner_radius_all(5)
 	return style
 
+func _center_dialog() -> void:
+	# Mobile: keep the enlarged dialog centered on any viewport. Desktop keeps
+	# its classic fixed spot.
+	if dialog_panel == null or not (force_mobile or is_mobile()):
+		return
+	var view := Vector2(1920, 1080)
+	var vp := get_viewport()
+	if vp != null:
+		var visible := vp.get_visible_rect().size
+		if visible.x >= 1.0 and visible.y >= 1.0:
+			view = visible
+	dialog_panel.position = (view - dialog_panel.size) * 0.5
+
 func _panel(parent: Node, at: Vector2, dimensions: Vector2) -> Panel:
 	var panel := Panel.new()
-	panel.position = at
-	panel.size = dimensions
+	panel.position = at * dlg
+	panel.size = dimensions * dlg
 	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_theme_stylebox_override("panel", _style(Color(0.035, 0.065, 0.085, 0.96)))
 	parent.add_child(panel)
@@ -142,10 +173,10 @@ func _panel(parent: Node, at: Vector2, dimensions: Vector2) -> Panel:
 
 func _label(parent: Node, at: Vector2, dimensions: Vector2, caption: String, font_size: int, color: Color) -> Label:
 	var label := Label.new()
-	label.position = at
-	label.size = dimensions
+	label.position = at * dlg
+	label.size = dimensions * dlg
 	label.text = caption
-	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_font_size_override("font_size", int(font_size * dlg))
 	label.add_theme_color_override("font_color", color)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(label)
@@ -153,11 +184,11 @@ func _label(parent: Node, at: Vector2, dimensions: Vector2, caption: String, fon
 
 func _button(parent: Node, at: Vector2, dimensions: Vector2, caption: String) -> Button:
 	var button := Button.new()
-	button.position = at
-	button.size = dimensions
+	button.position = at * dlg
+	button.size = dimensions * dlg
 	button.text = caption
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
-	button.add_theme_font_size_override("font_size", 20)
+	button.add_theme_font_size_override("font_size", int(20 * dlg))
 	button.add_theme_color_override("font_color", WHITE)
 	button.add_theme_stylebox_override("normal", _style(INK))
 	button.add_theme_stylebox_override("hover", _style(Color("203d49"), CYAN))
@@ -178,8 +209,11 @@ func _build_ui() -> void:
 	shade.color = Color(0.015, 0.025, 0.035, 0.72)
 	root.add_child(shade)
 
-	var panel := _panel(root, Vector2(630, 240), Vector2(660, 560))
-	var eyebrow := _label(panel, Vector2(30, 28), Vector2(600, 30), "RAPTOR  /  OPTIONS   —   ESC TO RESUME", 18, CYAN)
+	var mobile := force_mobile or is_mobile()
+	var panel := _panel(root, Vector2(630, 240), Vector2(660, 480 if mobile else 560))
+	dialog_panel = panel
+	var eyebrow := _label(panel, Vector2(30, 28), Vector2(600, 30),
+		"RAPTOR  /  OPTIONS" if mobile else "RAPTOR  /  OPTIONS   —   ESC TO RESUME", 18, CYAN)
 	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var title := _label(panel, Vector2(30, 66), Vector2(600, 70), "PAUSED", 54, WHITE)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -189,8 +223,8 @@ func _build_ui() -> void:
 	volume_value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 	volume_slider = HSlider.new()
-	volume_slider.position = Vector2(40, 206)
-	volume_slider.size = Vector2(580, 32)
+	volume_slider.position = Vector2(40, 206) * dlg
+	volume_slider.size = Vector2(580, 56 if mobile else 32) * dlg
 	volume_slider.min_value = 0.0
 	volume_slider.max_value = 100.0
 	volume_slider.step = 1.0
@@ -203,32 +237,35 @@ func _build_ui() -> void:
 
 
 
-	if resolution_supported():
-		_label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION", 18, MUTED)
-		for i in range(RESOLUTIONS.size()):
-			var choice: Vector2i = RESOLUTIONS[i]
-			var res_button := _button(panel, Vector2(40 + i * 200, 312), Vector2(180, 52),
-				resolution_to_string(choice))
-			var index := i
-			res_button.pressed.connect(func(): _on_resolution_pressed(index))
-			resolution_buttons.append(res_button)
-		_refresh_resolution_buttons()
-	else:
-		var fixed_note := _label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION: FIXED BY DEVICE / BROWSER", 18, MUTED)
-		fixed_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if not mobile:
+		if resolution_supported():
+			_label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION", 18, MUTED)
+			for i in range(RESOLUTIONS.size()):
+				var choice: Vector2i = RESOLUTIONS[i]
+				var res_button := _button(panel, Vector2(40 + i * 200, 312), Vector2(180, 52),
+					resolution_to_string(choice))
+				var index := i
+				res_button.pressed.connect(func(): _on_resolution_pressed(index))
+				resolution_buttons.append(res_button)
+			_refresh_resolution_buttons()
+		else:
+			var fixed_note := _label(panel, Vector2(40, 280), Vector2(580, 28), "RESOLUTION: FIXED BY DEVICE / BROWSER", 18, MUTED)
+			fixed_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 
-	mute_button = _button(panel, Vector2(40, 380), Vector2(280, 56), "SOUND  ON")
+	mute_button = _button(panel, Vector2(40, 308 if mobile else 380), Vector2(280, 56), "SOUND  ON")
 	mute_button.pressed.connect(_on_mute_pressed)
-	var restart_button := _button(panel, Vector2(340, 380), Vector2(280, 56), "RESTART")
+	var restart_button := _button(panel, Vector2(340, 308 if mobile else 380), Vector2(280, 56), "RESTART")
 	restart_button.pressed.connect(_on_restart_pressed)
 
-	resume_button = _button(panel, Vector2(40, 458), Vector2(280, 62), "RESUME  (ESC)")
+	resume_button = _button(panel, Vector2(40, 380 if mobile else 458), Vector2(280, 62),
+		"RESUME" if mobile else "RESUME  (ESC)")
 	resume_button.pressed.connect(func(): set_open(false))
-	var exit_button := _button(panel, Vector2(340, 458), Vector2(280, 62), "EXIT")
+	exit_button = _button(panel, Vector2(340, 380 if mobile else 458), Vector2(280, 62), "EXIT")
 	exit_button.pressed.connect(_on_exit_pressed)
-	var capture_hint := _label(panel, Vector2(40, 524), Vector2(580, 26), "S SCREENSHOT  ·  R RECORD 30FPS  (DESKTOP)", 15, MUTED)
-	capture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	if not mobile:
+		var capture_hint := _label(panel, Vector2(40, 524), Vector2(580, 26), "S SCREENSHOT  ·  R RECORD 30FPS  (DESKTOP)", 15, MUTED)
+		capture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 # ── Handlers ─────────────────────────────────────────────────────────
 

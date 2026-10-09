@@ -25,6 +25,11 @@ const CORNER := 16.0
 const REC_RED := Color("ff5a5a")
 const WHITE := Color("e8efed")
 
+static func is_mobile() -> bool:
+	return OS.has_feature("android") or OS.has_feature("ios")
+
+var ui_scale := 1.0
+
 var overlay: CanvasLayer
 var rec_label: Label
 var toast_label: Label
@@ -56,6 +61,8 @@ var _ffmpeg_state := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
+	if is_mobile():
+		ui_scale = 1.5
 	RenderingServer.frame_post_draw.connect(_on_frame_post_draw)
 	_build_overlay()
 	get_tree().root.size_changed.connect(_refresh_rec_position)
@@ -349,17 +356,20 @@ func _refresh_rec_label() -> void:
 
 func _refresh_rec_position() -> void:
 	# Bottom-left corner of the projected game rectangle, like the other HUDs.
+	# On mobile the settings gear owns that corner, so REC sits above it.
 	var view := PROJECTED_SIZE
 	var vp := get_viewport()
 	if vp != null:
 		var visible := vp.get_visible_rect().size
 		if visible.x >= 1.0 and visible.y >= 1.0:
 			view = visible
+	var margin := CORNER * ui_scale
+	var lift := (72.0 + 10.0) * ui_scale if is_mobile() else 0.0
 	var rect_size := Vector2(minf(PROJECTED_SIZE.x, view.x), minf(PROJECTED_SIZE.y, view.y))
 	var rect_pos := (view - rect_size) * 0.5
 	rec_label.position = Vector2(
-		rect_pos.x + CORNER,
-		rect_pos.y + rect_size.y - CORNER - rec_label.size.y)
+		rect_pos.x + margin,
+		rect_pos.y + rect_size.y - margin - rec_label.size.y - lift)
 
 func _toast(text: String) -> void:
 	if toast_label == null or not is_instance_valid(toast_label):
@@ -382,9 +392,9 @@ func _build_overlay() -> void:
 	root.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	overlay.add_child(root)
-	rec_label = _make_label(root, Vector2(16, 1030), Vector2(520, 34), "", 22, REC_RED)
+	rec_label = _make_label(root, Vector2(16, 1030), Vector2(520, 34) * ui_scale, "", int(22 * ui_scale), REC_RED)
 	rec_label.visible = false
-	toast_label = _make_label(root, Vector2(460, 930), Vector2(1000, 34), "", 20, WHITE)
+	toast_label = _make_label(root, Vector2(460, 930), Vector2(1000, 34) * ui_scale, "", int(20 * ui_scale), WHITE)
 	toast_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	toast_label.modulate.a = 0.0
 
