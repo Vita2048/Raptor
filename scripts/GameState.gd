@@ -25,8 +25,18 @@ var structures_destroyed := 0
 var vehicles_destroyed := 0
 var shots_fired := 0
 var armor_lost := 0
+# Sector-entry checkpoint: dying retries the current sector instead of the whole run.
+var checkpoint_level := 1
+var checkpoint_score := 0
+var checkpoint_bosses := 0
+var checkpoint_ships := 0
+var checkpoint_structures := 0
+var checkpoint_vehicles := 0
+var checkpoint_shots := 0
+var checkpoint_elapsed := 0.0
+var checkpoint_next_boss := BOSS_INTERVAL
 
-func reset() -> void:
+func reset(preserve_checkpoint := false) -> void:
 	campaign_won = false
 	elapsed_seconds = 0.0
 	ships_destroyed = 0
@@ -41,6 +51,16 @@ func reset() -> void:
 	game_active = true
 	next_boss_score = BOSS_INTERVAL
 	current_level = 1
+	if not preserve_checkpoint:
+		checkpoint_level = 1
+		checkpoint_score = 0
+		checkpoint_bosses = 0
+		checkpoint_ships = 0
+		checkpoint_structures = 0
+		checkpoint_vehicles = 0
+		checkpoint_shots = 0
+		checkpoint_elapsed = 0.0
+		checkpoint_next_boss = BOSS_INTERVAL
 	score_changed.emit(score)
 	player_health_changed.emit(player_health, player_max_health)
 	boss_health_changed.emit(0, 1)
@@ -84,6 +104,31 @@ func advance_level() -> void:
 	if current_level >= 3 or not game_active:
 		return
 	current_level += 1
+	record_checkpoint()
+	level_advanced.emit(current_level)
+
+func record_checkpoint() -> void:
+	checkpoint_level = current_level
+	checkpoint_score = score
+	checkpoint_bosses = bosses_destroyed
+	checkpoint_ships = ships_destroyed
+	checkpoint_structures = structures_destroyed
+	checkpoint_vehicles = vehicles_destroyed
+	checkpoint_shots = shots_fired
+	checkpoint_elapsed = elapsed_seconds
+	checkpoint_next_boss = next_boss_score
+
+func restore_checkpoint() -> void:
+	current_level = checkpoint_level
+	score = checkpoint_score
+	bosses_destroyed = checkpoint_bosses
+	ships_destroyed = checkpoint_ships
+	structures_destroyed = checkpoint_structures
+	vehicles_destroyed = checkpoint_vehicles
+	shots_fired = checkpoint_shots
+	elapsed_seconds = checkpoint_elapsed
+	next_boss_score = checkpoint_next_boss
+	score_changed.emit(score)
 	level_advanced.emit(current_level)
 
 func _process(delta: float) -> void:

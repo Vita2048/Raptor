@@ -187,6 +187,10 @@ func _on_game_over() -> void:
 		approach_panel.queue_free()
 	boss_panel.hide()
 	result_label.text = "SECTOR %02d     /     SCORE %07d" % [GameState.current_level, GameState.score]
+	if GameState.checkpoint_level > 1:
+		play_again_button.text = "RETRY SECTOR %02d" % GameState.checkpoint_level
+	else:
+		play_again_button.text = "FLY AGAIN"
 	game_over_overlay.show()
 	game_over_overlay.modulate.a = 0.0
 	create_tween().tween_property(game_over_overlay, "modulate:a", 1.0, 0.4)

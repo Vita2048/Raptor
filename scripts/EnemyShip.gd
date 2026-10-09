@@ -108,11 +108,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-21, -52), "length": 52.0, "width": 17.0},
 				{"position": Vector2(21, -52), "length": 52.0, "width": 17.0}
 			])
-			health = 85
-			speed = 160.0
+			health = 110
+			speed = 185.0
 			score_value = 700
 			amplitude = 70.0
-			fire_interval = 1.25
+			fire_interval = 1.0
 		"boss":
 			sprite.texture = AssetDB.ship_textures["boss"]
 			sprite.scale = Vector2.ONE * 0.32
@@ -123,11 +123,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
 				
 			])
-			health = 4520
+			health = 5800
 			speed = 0.0
 			score_value = 6000
-			amplitude = 180.0
-			fire_interval = 0.35
+			amplitude = 210.0
+			fire_interval = 0.30
 		"interceptor1":
 			sprite.texture = AssetDB.ship_textures["interceptor1"]
 			# Texture is 642x609 — scale to match the ~123px display size of other interceptors
@@ -140,11 +140,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-18, -57), "length": 40.0, "width": 13.0},
 				{"position": Vector2(18, -57), "length": 40.0, "width": 13.0}
 			])
-			health = 44
-			speed = 295.0
+			health = 58
+			speed = 325.0
 			score_value = 320
 			amplitude = 105.0
-			fire_interval = 1.65
+			fire_interval = 1.3
 		"enemy4":
 			sprite.texture = AssetDB.ship_textures["enemy4"]
 			sprite.scale = Vector2.ONE * 0.82
@@ -154,11 +154,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-5, -50), "length": 48.0, "width": 13.0},
 				{"position": Vector2(8, -50), "length": 48.0, "width": 13.0}
 			])
-			health = 58
-			speed = 255.0
+			health = 75
+			speed = 285.0
 			score_value = 390
 			amplitude = 88.0
-			fire_interval = 1.05
+			fire_interval = 0.85
 		"enemy5":
 			sprite.texture = AssetDB.ship_textures["enemy5"]
 			sprite.scale = Vector2.ONE * 0.78
@@ -169,11 +169,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-2, -64), "length": 62.0, "width": 15.0},
 				{"position": Vector2(14, -60), "length": 55.0, "width": 12.0}
 			])
-			health = 72
-			speed = 195.0
+			health = 95
+			speed = 225.0
 			score_value = 520
 			amplitude = 140.0
-			fire_interval = 1.45
+			fire_interval = 1.15
 		"enemy6":
 			sprite.texture = AssetDB.ship_textures["enemy6"]
 			sprite.scale = Vector2.ONE * 0.71
@@ -183,11 +183,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-6, -71), "length": 52.0, "width": 12.0},
 				{"position": Vector2(8, -72), "length": 52.0, "width": 12.0}
 			])
-			health = 48
-			speed = 340.0
+			health = 64
+			speed = 370.0
 			score_value = 410
 			amplitude = 70.0
-			fire_interval = 0.95
+			fire_interval = 0.75
 		"boss2":
 			sprite.texture = AssetDB.ship_textures["boss2"]
 			sprite.scale = Vector2.ONE * 0.5655
@@ -200,11 +200,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(9.0, -108.0), "length": 150.0, "width": 25.5},
 				{"position": Vector2(51.0, -112.5), "length": 168.0, "width": 36.0}
 			])
-			health = 5650
+			health = 7200
 			speed = 0.0
 			score_value = 8200
-			amplitude = 145.0
-			fire_interval = 0.29
+			amplitude = 165.0
+			fire_interval = 0.24
 		_:
 			sprite.texture = AssetDB.ship_textures["interceptor"]
 			sprite.scale = Vector2.ONE * 0.9
@@ -213,11 +213,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(-36, -45), "length": 42.0, "width": 14.0},
 				{"position": Vector2(36, -45), "length": 42.0, "width": 14.0}
 			])
-			health = 42
-			speed = 310.0
+			health = 55
+			speed = 335.0
 			score_value = 300
 			amplitude = 115.0
-			fire_interval = 1.8
+			fire_interval = 1.4
 	max_health = health
 	fire_timer = randf_range(0.4, fire_interval)
 
@@ -322,16 +322,16 @@ func _fire_pattern() -> void:
 	if is_boss:
 		var directions: Array = []
 		var origin: Vector2
-		var speed := 520.0
-		var dmg := 15
+		var speed := 560.0
+		var dmg := 20
 		if enemy_type == "boss2":
 			# Level2 boss: denser pattern but with a clear central safe gap (~30 degrees)
 			# so the player has a place to dodge and hide between the volleys
 			for angle in [-82.0, -62.0, -42.0, -25.0, -15.0, 15.0, 25.0, 42.0, 62.0, 82.0]:
 				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
 			origin = global_position + Vector2(0, 160)
-			speed = 580.0
-			dmg = 17
+			speed = 620.0
+			dmg = 22
 			VFX.muzzle_flash(origin, Vector2.DOWN, false)
 			request_fire.emit(origin, directions, speed, dmg)
 		else:
@@ -344,31 +344,31 @@ func _fire_pattern() -> void:
 	elif enemy_type == "bomber":
 		var origin := global_position + Vector2(0, 64)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2.DOWN, Vector2(0.25, 1.0), Vector2(-0.25, 1.0)], 390.0, 12)
+		request_fire.emit(origin, [Vector2.DOWN, Vector2(0.25, 1.0), Vector2(-0.25, 1.0)], 420.0, 14)
 	elif enemy_type == "interceptor1":
 		# Twin-spread shot: two slightly angled bolts for a more aggressive feel
 		var origin := global_position + Vector2(0, 30)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized()], 450.0, 11)
+		request_fire.emit(origin, [Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized()], 480.0, 13)
 	elif enemy_type == "enemy4":
 		# aggressive forward triple
 		var origin := global_position + Vector2(0, 52)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.18, 1.0).normalized(), Vector2.DOWN, Vector2(0.18, 1.0).normalized()], 510.0, 9)
+		request_fire.emit(origin, [Vector2(-0.18, 1.0).normalized(), Vector2.DOWN, Vector2(0.18, 1.0).normalized()], 540.0, 12)
 	elif enemy_type == "enemy5":
 		# wide spread + slow heavy
 		var origin := global_position + Vector2(0, 58)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.38, 1.0).normalized(), Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized(), Vector2(0.38, 1.0).normalized()], 320.0, 14)
+		request_fire.emit(origin, [Vector2(-0.38, 1.0).normalized(), Vector2(-0.12, 1.0).normalized(), Vector2(0.12, 1.0).normalized(), Vector2(0.38, 1.0).normalized()], 350.0, 16)
 	elif enemy_type == "enemy6":
 		# rapid narrow double
 		var origin := global_position + Vector2(0, 70)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2(-0.07, 1.0).normalized(), Vector2(0.07, 1.0).normalized()], 620.0, 8)
+		request_fire.emit(origin, [Vector2(-0.07, 1.0).normalized(), Vector2(0.07, 1.0).normalized()], 660.0, 11)
 	else:
 		var origin := global_position + Vector2(0, 48)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
-		request_fire.emit(origin, [Vector2.DOWN], 470.0, 10)
+		request_fire.emit(origin, [Vector2.DOWN], 500.0, 12)
 
 func _muzzle_position() -> Vector2:
 	if enemy_type in ["boss3", "lancer", "sentinel"]:

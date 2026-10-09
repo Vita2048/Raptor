@@ -21,8 +21,16 @@ var shake_time := 0.0
 
 func _ready() -> void:
 	randomize()
-	GameState.reset()
+	# Dying retries the current sector; victory, pause restart, and fresh launch start over.
+	var retry_after_death := not GameState.game_active and not GameState.campaign_won
+	var saved_checkpoint: int = GameState.checkpoint_level
+	var retry_same_sector := retry_after_death and saved_checkpoint > 1
+	GameState.reset(retry_same_sector)
+	if retry_same_sector:
+		GameState.restore_checkpoint()
 	_build_scene()
+	if GameState.current_level > 1 and not preload("res://scripts/DebugOptions.gd").final_boss_requested():
+		world_spawner.rebuild_for_level(GameState.current_level)
 	if preload("res://scripts/DebugOptions.gd").final_boss_requested():
 		_start_final_boss_debug()
 

@@ -11,7 +11,7 @@ var player: Node2D
 var enemy_pool: ObjectPool
 var enemy_bullet_pool: ObjectPool
 var spawn_timer := 0.0
-var spawn_interval := 1.15
+var spawn_interval := 0.95
 var boss_spawned := false
 var boss_pending := false
 var bomb_spawn_timer := 14.0
@@ -19,8 +19,16 @@ var bomb_spawn_timer := 14.0
 func _ready() -> void:
 	enemy_pool = ObjectPool.new(_create_enemy, self, 22)
 	enemy_bullet_pool = ObjectPool.new(_create_enemy_bullet, get_parent(), 60)
+	spawn_interval = spawn_interval_for_level(GameState.current_level)
 	GameState.game_over.connect(_on_game_over)
 	GameState.campaign_completed.connect(_on_game_over)
+
+static func spawn_interval_for_level(level: int) -> float:
+	if level >= 3:
+		return 1.05
+	if level >= 2:
+		return 0.85
+	return 0.95
 
 func _process(delta: float) -> void:
 	if not GameState.game_active or boss_pending:
@@ -40,7 +48,7 @@ func _process(delta: float) -> void:
 		bomb_spawn_timer = randf_range(9.5, 23.0)
 
 func _spawn_wave() -> void:
-	var count := randi_range(2, 5)
+	var count := randi_range(3, 6)
 	var start_x := randf_range(180.0, 1740.0)
 	for i in range(count):
 		var enemy := enemy_pool.acquire() as Area2D
@@ -121,7 +129,7 @@ func _on_boss_destroyed(pos: Vector2) -> void:
 		if ws and ws.has_method("rebuild_for_level"):
 			ws.call_deferred("rebuild_for_level", GameState.current_level)
 		spawn_timer = 2.8
-		spawn_interval = 1.05 if GameState.current_level == 3 else 1.15
+		spawn_interval = spawn_interval_for_level(GameState.current_level)
 		enemy_bullet_pool.release_all()
 	else:
 		GameState.complete_campaign()
