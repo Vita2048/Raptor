@@ -2,15 +2,13 @@ shader_type canvas_item;
 varying vec4 tint;
 uniform bool animate_water = false;
 global uniform vec4 sector_light;
-uniform sampler2D current_map : source_color, filter_linear_mipmap;
-uniform sampler2D next_map : source_color, filter_linear_mipmap;
+uniform sampler2D current_map : source_color, filter_linear_mipmap, repeat_enable;
+uniform sampler2D next_map : source_color, filter_linear_mipmap, repeat_enable;
 uniform float transition_progress = 1.0;
 
 vec4 map_sample(sampler2D map_tex, vec2 uv) {
-    // Symmetric edge overlap joins the tile without stretching a single scanline.
-    vec4 color = texture(map_tex, uv);
-    float edge = 0.5 * (1.0 - smoothstep(0.0, 0.012, min(uv.y, 1.0 - uv.y)));
-    return mix(color, texture(map_tex, vec2(uv.x, 1.0 - uv.y)), edge);
+    // Repaired textures wrap naturally; repeat filtering also joins water ripples.
+    return texture(map_tex, vec2(clamp(uv.x, 0.001, 0.999), uv.y));
 }
 
 
@@ -27,10 +25,10 @@ void fragment() {
 	if (animate_water) {
 		// Color mask excludes sandstone, gray bridges and white shore foam.
 		float water = smoothstep(0.025, 0.12, min(tex.b, tex.g) - tex.r);
-		vec2 ripple = vec2(sin(UV.y * 610.0 + TIME * 0.85), cos(UV.x * 480.0 + TIME * 0.6));
+		vec2 ripple = vec2(sin(UV.y * (6.28318530718 * 97.0) + TIME * 0.85), cos(UV.x * 480.0 + TIME * 0.6));
 		vec2 water_uv = UV + ripple * TEXTURE_PIXEL_SIZE * 0.55 * water;
         vec3 moving = mix(map_sample(current_map, water_uv), map_sample(next_map, water_uv), arrival).rgb;
-		float glint = pow(0.5 + 0.5 * sin(UV.y * 930.0 + sin(UV.x * 190.0) * 2.0 - TIME * 1.1), 12.0);
+		float glint = pow(0.5 + 0.5 * sin(UV.y * (6.28318530718 * 148.0) + sin(UV.x * 190.0) * 2.0 - TIME * 1.1), 12.0);
 		tex.rgb = mix(tex.rgb, moving, water * 0.65) + vec3(0.003, 0.006, 0.008) * glint * water;
 	}
 	float luminance = dot(tex.rgb, vec3(0.2126, 0.7152, 0.0722));

@@ -112,7 +112,8 @@ share the original normalized map coordinates, retaining bridge routes and
 structure yards. Outer vehicle routes shift inward to follow the new service
 roads. Scenery damage and wreck state persist during the five-second advancing
 terrain blend; checkpoint retries initialize the correct map immediately.
-The terrain shader blends opposing edges over a narrow strip at the loop seam.
+Both terrain textures have repaired cyclical artwork at their boundaries. The
+shader uses repeat filtering and periodic water motion without mirrored blending.
 
 Run tests with rendering enabled (screenshot checkpoints cannot run headless):
 - res://tests/visual_pass_smoke.gd
@@ -128,3 +129,11 @@ bosses, real projectile collisions, vehicle firing and persistent destruction.
 
 Source assets and generation prompts: assets/background/SECTOR_ART.md.
 APK and web distributions require a new export.
+
+## Terrain seam verification
+
+Run `res://tests/terrain_seam_smoke.gd` with rendering enabled. It captures
+both maps at three scroll positions with the boundary in the middle of the screen.
+Inspect `artifacts/seams/sector-2-wrap-1.png` and `sector-3-wrap-1.png`.
+Raw joins and triple-stack previews are also in `artifacts/seams/`.
+The offline assembly asserts that rows 160 through height-161 are unchanged.
