@@ -29,6 +29,8 @@ func _ready() -> void:
 	_update_sprite_positions()
 
 func _process(delta: float) -> void:
+	if GameState.campaign_won:
+		return
 	distance += SCROLL_SPEED * delta
 	scroll_offset = fposmod(distance, loop_height)
 	_update_sprite_positions()

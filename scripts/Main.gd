@@ -76,6 +76,12 @@ func _build_scene() -> void:
 	add_child(pause_menu)
 
 	GameState.game_over.connect(_on_game_over)
+	GameState.campaign_completed.connect(_on_campaign_completed)
+
+func _on_campaign_completed() -> void:
+	player.bullet_pool.release_all()
+	player.set_deferred("monitoring", false)
+	player.set_deferred("monitorable", false)
 
 func _on_camera_impulse(strength: float) -> void:
 	shake_strength = minf(maxf(shake_strength, strength), 5.0)

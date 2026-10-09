@@ -105,6 +105,13 @@ func load_all() -> void:
 		"enemy6": _safe_load_tex(SHIPS_DIR + "Enemy6.png"),
 		"boss2": _safe_load_tex(SHIPS_DIR + "Bosship2.png")
 	}
+	var sector_bounds := {"lancer": Rect2(97, 21, 1061, 1195), "sentinel": Rect2(27, 54, 1200, 1149), "boss3": Rect2(6, 24, 1243, 1205)}
+	for kind in sector_bounds:
+		var ship := AtlasTexture.new()
+		ship.atlas = load(SHIPS_DIR + "sector3/" + kind + ".png")
+		ship.region = sector_bounds[kind]
+		ship.filter_clip = true
+		ship_textures[kind] = ship
 	bomb_texture = _safe_load_tex(ITEMS_DIR + "Bomb.png")
 	black_smoke_textures = _load_zero_series(PARTICLES_DIR, "blackSmoke", 0, 24)
 	explosion_textures = _load_zero_series(PARTICLES_DIR, "explosion", 0, 8)

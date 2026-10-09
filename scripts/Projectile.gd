@@ -77,6 +77,8 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 	velocity = direction.normalized() * speed
 	damage = hit_damage
 	from_player = player_owned
+	if from_player and GameState.game_active:
+		GameState.shots_fired += 1
 	rotation = velocity.angle() + PI * 0.5
 	impact_sent = false
 	trail.clear_points()

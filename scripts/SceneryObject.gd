@@ -118,6 +118,7 @@ func take_damage(amount: int) -> void:
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
 	GameState.add_score(int(sprite.texture.get_meta("score", 350)))
+	GameState.record_kill("structure")
 	queue_redraw()
 	call_deferred("_create_remains")
 

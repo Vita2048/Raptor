@@ -34,7 +34,8 @@ func _ready() -> void:
 	sprite = Sprite2D.new()
 	sprite.texture = AssetDB.vehicle_textures[kind]
 	sprite.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR_WITH_MIPMAPS
-	sprite.scale = Vector2.ONE * (74.0 if kind == "tank" else 66.0) / sprite.texture.get_height()
+	# A modest readability boost keeps the hull inside the existing bridge deck.
+	sprite.scale = Vector2.ONE * (98.0 if kind == "tank" else 88.0) / sprite.texture.get_height()
 	sprite.modulate = Color(0.91, 0.88, 0.8)
 	shadow.scale = sprite.scale
 	footprint = sprite.texture.get_size() * sprite.scale
@@ -151,6 +152,7 @@ func take_damage(amount: int) -> void:
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
 	GameState.add_score(450 if kind == "tank" else 250)
+	GameState.record_kill("vehicle")
 	call_deferred("_create_remains")
 
 func _create_remains() -> void:

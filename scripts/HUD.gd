@@ -12,6 +12,9 @@ var score_label: Label
 var level_label: Label
 var boss_bar: ProgressBar
 var boss_panel: Panel
+var boss_title: Label
+var victory_overlay: Control
+var victory_stats: Label
 var game_over_overlay: Control
 var result_label: Label
 var play_again_button: Button
@@ -27,6 +30,7 @@ func _ready() -> void:
 	GameState.boss_started.connect(_on_boss_started)
 	GameState.boss_health_changed.connect(_on_boss_health_changed)
 	GameState.game_over.connect(_on_game_over)
+	GameState.campaign_completed.connect(_on_campaign_completed)
 	GameState.level_advanced.connect(_on_level_advanced)
 	if VFX != null and VFX.get("audio") != null:
 		var audio: Node = VFX.get("audio")
@@ -101,7 +105,7 @@ func _build_ui() -> void:
 	score_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 
 	boss_panel = _panel(root, Vector2(660, 28), Vector2(600, 72))
-	var boss_title := _label(boss_panel, Vector2(18, 8), Vector2(564, 28), "HEAVY CONTACT  /  BOSS ARMOR", 17, AMBER)
+	boss_title = _label(boss_panel, Vector2(18, 8), Vector2(564, 28), "HEAVY CONTACT  /  BOSS ARMOR", 17, AMBER)
 	boss_title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	boss_bar = ProgressBar.new()
 	boss_bar.position = Vector2(18, 44)
@@ -164,6 +168,7 @@ func _on_player_health_changed(health: int, max_health: int) -> void:
 	health_bar.set_health(health, max_health)
 
 func _on_boss_started(max_health: int) -> void:
+	boss_title.text = "COMMAND SHIP  /  FINAL ENGAGEMENT" if GameState.current_level == 3 else "HEAVY CONTACT  /  BOSS ARMOR"
 	boss_panel.show()
 	boss_bar.max_value = max_health
 	boss_bar.value = max_health
@@ -202,7 +207,7 @@ func show_boss_warning() -> void:
 	if is_instance_valid(approach_panel):
 		approach_panel.queue_free()
 	approach_panel = _panel(root, Vector2(660, 160), Vector2(600, 104))
-	var title := _label(approach_panel, Vector2(24, 16), Vector2(552, 32), "HEAVY CONTACT INBOUND", 25, AMBER)
+	var title := _label(approach_panel, Vector2(24, 16), Vector2(552, 32), "FINAL COMMAND SHIP INBOUND" if GameState.current_level == 3 else "HEAVY CONTACT INBOUND", 25, AMBER)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	var detail := _label(approach_panel, Vector2(24, 57), Vector2(552, 25), "CLEAR THE APPROACH  /  PREPARE TO ENGAGE", 16, MUTED)
 	detail.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -212,3 +217,38 @@ func show_boss_warning() -> void:
 	tween.tween_interval(2.2)
 	tween.tween_property(approach_panel, "modulate:a", 0.0, 0.4)
 	tween.tween_callback(approach_panel.queue_free)
+
+func _on_campaign_completed() -> void:
+	boss_panel.hide()
+	if is_instance_valid(approach_panel):
+		approach_panel.queue_free()
+	# Let the final destruction play before revealing the debrief.
+	await get_tree().create_timer(1.4).timeout
+	victory_overlay = Control.new()
+	victory_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	victory_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	root.add_child(victory_overlay)
+	var shade := ColorRect.new()
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.color = Color(0.015, 0.025, 0.035, 0.84)
+	victory_overlay.add_child(shade)
+	var panel := _panel(victory_overlay, Vector2(530, 170), Vector2(860, 740))
+	var eyebrow := _label(panel, Vector2(40, 30), Vector2(780, 30), "RAPTOR  /  ALL SECTORS SECURED", 18, CYAN)
+	eyebrow.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var title := _label(panel, Vector2(40, 78), Vector2(780, 75), "MISSION ACCOMPLISHED", 48, WHITE)
+	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var congratulations := _label(panel, Vector2(40, 164), Vector2(780, 58), "Congratulations, pilot.\nThe command ship is down. Your mission is complete.", 23, CYAN)
+	congratulations.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var labels := "FINAL SCORE\nFLIGHT TIME\nENEMY SHIPS / BOSSES\nSTRUCTURES / VEHICLES\nSHOTS FIRED\nARMOR REMAINING"
+	var names := _label(panel, Vector2(64, 272), Vector2(470, 300), labels, 23, MUTED)
+	names.add_theme_constant_override("line_spacing", 15)
+	var seconds := int(GameState.elapsed_seconds)
+	var values := "%07d\n%02d:%02d\n%d / %d\n%d / %d\n%d\n%d / %d" % [GameState.score, seconds / 60, seconds % 60, GameState.ships_destroyed, GameState.bosses_destroyed, GameState.structures_destroyed, GameState.vehicles_destroyed, GameState.shots_fired, GameState.player_health, GameState.player_max_health]
+	victory_stats = _label(panel, Vector2(540, 272), Vector2(256, 300), values, 23, WHITE)
+	victory_stats.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	victory_stats.add_theme_constant_override("line_spacing", 15)
+	var replay := _button(panel, Vector2(280, 634), Vector2(300, 62), "FLY AGAIN")
+	replay.pressed.connect(func(): get_tree().reload_current_scene())
+	victory_overlay.modulate.a = 0.0
+	create_tween().tween_property(victory_overlay, "modulate:a", 1.0, 0.55)
+	replay.grab_focus()

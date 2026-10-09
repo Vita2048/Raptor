@@ -25,6 +25,7 @@ var collision_shape: CollisionShape2D
 var silhouette_collision_polygons: Array[CollisionPolygon2D] = []
 var is_boss := false
 var is_dead := false
+var volley_index := 0
 var entrance_remaining := 0.0
 var charge_remaining := -1.0
 var charge_visual: Node2D
@@ -61,7 +62,8 @@ func set_pool(value) -> void:
 
 func spawn(kind: String, start_position: Vector2) -> void:
 	enemy_type = kind
-	is_boss = kind == "boss" or kind == "boss2"
+	is_boss = kind in ["boss", "boss2", "boss3"]
+	volley_index = 0
 	is_dead = false
 	entrance_remaining = 0.0
 	charge_remaining = -1.0
@@ -74,6 +76,25 @@ func spawn(kind: String, start_position: Vector2) -> void:
 	set_deferred("monitoring", true)
 	set_deferred("monitorable", true)
 	match kind:
+		"lancer", "sentinel", "boss3":
+			sprite.texture = AssetDB.ship_textures[kind]
+			var width := 150.0 if kind == "lancer" else (195.0 if kind == "sentinel" else 530.0)
+			sprite.scale = Vector2.ONE * width / sprite.texture.get_width()
+			if is_boss:
+				_configure_silhouette_collision(180.0)
+			else:
+				_configure_circle_collision(35.0 if kind == "lancer" else 55.0)
+			var dimensions := sprite.texture.get_size() * sprite.scale
+			var nozzles: Array = []
+			var offsets: Array = [-0.12, -0.04, 0.04, 0.12] if is_boss else ([-0.06, 0.06] if kind == "lancer" else [-0.16, 0.16])
+			for offset in offsets:
+				nozzles.append({"position": Vector2(width * float(offset), -dimensions.y * 0.49), "length": 100.0 if is_boss else 44.0, "width": 20.0 if is_boss else 12.0})
+			_configure_exhausts(nozzles)
+			health = 6800 if is_boss else (62 if kind == "lancer" else 120)
+			speed = 0.0 if is_boss else (360.0 if kind == "lancer" else 175.0)
+			score_value = 12000 if is_boss else (540 if kind == "lancer" else 850)
+			amplitude = 170.0 if is_boss else (140.0 if kind == "lancer" else 65.0)
+			fire_interval = 0.85 if is_boss else (1.05 if kind == "lancer" else 1.65)
 		"bomber":
 			sprite.texture = AssetDB.ship_textures["bomber"]
 			sprite.scale = Vector2.ONE * 0.85
@@ -241,12 +262,44 @@ func _draw_charge() -> void:
 	if not is_boss or charge_remaining < 0.0:
 		return
 	var amount := clampf(1.0 - charge_remaining / CHARGE_TIME, 0.0, 1.0)
-	var muzzle := Vector2(0, 160 if enemy_type == "boss2" else 150)
+	var muzzle := _muzzle_position()
 	var color := Color(1.0, 0.68, 0.32, 0.35 + amount * 0.55)
 	charge_visual.draw_arc(muzzle, lerpf(38.0, 14.0, amount), 0, TAU, 40, color, 2.0, true)
 	charge_visual.draw_circle(muzzle, 4.0 + amount * 6.0, color)
 
 func _fire_pattern() -> void:
+	if enemy_type == "boss3":
+		var origin := global_position + _muzzle_position()
+		var directions: Array = []
+		var furious := health < max_health / 2
+		if volley_index % 3 == 2:
+			var player: Node2D = get_parent().player
+			var aim: Vector2 = (player.global_position - origin).normalized() if player else Vector2.DOWN
+			for angle in [-12.0, 0.0, 12.0]:
+				directions.append(aim.rotated(deg_to_rad(angle)))
+		else:
+			# Alternating fans leave a moving, readable gap; avoid a solid bullet wall.
+			var gap := -20.0 if volley_index % 3 == 0 else 20.0
+			for angle in [-70.0, -50.0, -30.0, -10.0, 10.0, 30.0, 50.0, 70.0]:
+				if absf(angle - gap) > 16.0:
+					directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
+		volley_index += 1
+		fire_interval = 0.65 if furious else 0.85
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, directions, 470.0 if furious else 410.0, 18)
+		return
+	if enemy_type in ["lancer", "sentinel"]:
+		var origin := global_position + _muzzle_position()
+		var directions: Array = []
+		if enemy_type == "lancer":
+			var player: Node2D = get_parent().player
+			directions = [(player.global_position - origin).normalized() if player else Vector2.DOWN]
+		else:
+			for angle in [-32.0, -16.0, 0.0, 16.0, 32.0]:
+				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, directions, 480.0 if enemy_type == "lancer" else 330.0, 12)
+		return
 	if is_boss:
 		var directions: Array = []
 		var origin: Vector2
@@ -298,25 +351,23 @@ func _fire_pattern() -> void:
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)
 		request_fire.emit(origin, [Vector2.DOWN], 470.0, 10)
 
+func _muzzle_position() -> Vector2:
+	if enemy_type in ["boss3", "lancer", "sentinel"]:
+		return Vector2(0, sprite.texture.get_height() * sprite.scale.y * 0.42)
+	return Vector2(0, 160 if enemy_type == "boss2" else 150)
+
 func _on_area_entered(area: Area2D) -> void:
-	if is_dead or entrance_remaining > 0.0:
+	if is_dead or entrance_remaining > 0.0 or not GameState.game_active or not area.visible:
 		return
 	# Direct ship-to-ship collision: enemy rams the player
 	if area.has_method("_shoot"):
-		is_dead = true
 		var ram_damage := 40 if is_boss else 25
 		GameState.damage_player(ram_damage)
 		VFX.impact_spark(global_position, Vector2(0, 220), false)
-		var death_position := global_position
-		var death_score := score_value
-		destroyed.emit(death_position, death_score, false)
-		if is_boss:
-			boss_destroyed.emit(death_position)
-		return_to_pool()
+		take_damage(150 if is_boss else health)
 		return
 	if area.has_method("is_player_damage") and area.is_player_damage():
-		health -= area.damage
-		hit_strength = 0.65
+		var damage: int = area.damage
 		var impact_pos := area.global_position
 		if is_boss and area.has_method("velocity"):
 			impact_pos = _get_visual_impact_point(impact_pos, area.velocity)
@@ -324,17 +375,23 @@ func _on_area_entered(area: Area2D) -> void:
 			area.spawn_impact(impact_pos)
 		if area.has_method("return_to_pool"):
 			area.return_to_pool()
-		if is_boss:
-			GameState.boss_health_changed.emit(max(health, 0), max_health)
-		if health <= 0:
-			is_dead = true
-			var death_position := global_position
-			var death_score := score_value
-			var death_was_boss := is_boss
-			destroyed.emit(death_position, death_score, death_was_boss)
-			if death_was_boss:
-				boss_destroyed.emit(death_position)
-			return_to_pool()
+		take_damage(damage)
+
+func take_damage(amount: int) -> void:
+	if is_dead or entrance_remaining > 0.0 or not GameState.game_active:
+		return
+	health = maxi(health - amount, 0)
+	hit_strength = 0.65
+	if is_boss:
+		GameState.boss_health_changed.emit(health, max_health)
+	if health <= 0:
+		is_dead = true
+		var death_position := global_position
+		var death_was_boss := is_boss
+		destroyed.emit(death_position, score_value, death_was_boss)
+		if death_was_boss:
+			boss_destroyed.emit(death_position)
+		return_to_pool()
 
 func return_to_pool() -> void:
 	if pool != null:
