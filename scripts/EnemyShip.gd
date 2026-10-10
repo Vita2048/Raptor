@@ -124,13 +124,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			fire_interval = 1.0
 		"boss":
 			sprite.texture = AssetDB.ship_textures["boss"]
-			sprite.scale = Vector2.ONE * 0.32
+			sprite.scale = Vector2.ONE * 224.0 / sprite.texture.get_width()
 			_configure_silhouette_collision(160.0)
 			_configure_exhausts([
-				{"position": Vector2(0, -168), "length": 108.0, "width": 30.0},
-				{"position": Vector2(-44, -182), "length": 118.0, "width": 34.0},
-				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
-				
+				{"position": Vector2(-20, -168), "length": 118.0, "width": 22.0},
+				{"position": Vector2(20, -168), "length": 118.0, "width": 22.0}
 			])
 			health = 3800
 			speed = 0.0
@@ -199,15 +197,12 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			fire_interval = 0.65
 		"boss2":
 			sprite.texture = AssetDB.ship_textures["boss2"]
-			sprite.scale = Vector2.ONE * 0.5655
+			sprite.scale = Vector2.ONE * 227.0 / sprite.texture.get_width()
 			_configure_silhouette_collision(303.0)
-			# Accurate engine positions from sprite analysis (Bosship2 401x547, engines near top of png)
-			# Level-2 boss is 50% larger than its previous visual size.
+			# Rear propulsion nozzles on the approved red metallic cruiser.
 			_configure_exhausts([
-				{"position": Vector2(-28.5, -112.5), "length": 168.0, "width": 36.0},
-				{"position": Vector2(-6.0, -108.0), "length": 150.0, "width": 25.5},
-				{"position": Vector2(9.0, -108.0), "length": 150.0, "width": 25.5},
-				{"position": Vector2(51.0, -112.5), "length": 168.0, "width": 36.0}
+				{"position": Vector2(-31, -187), "length": 168.0, "width": 26.0},
+				{"position": Vector2(31, -187), "length": 168.0, "width": 26.0}
 			])
 			health = 5200
 			speed = 0.0
@@ -531,9 +526,9 @@ func _configure_boss_appearance() -> void:
 	boss_damage_stage = 0
 	boss_damage_blend = 0.0
 	damage_effect.reset()
-	var sites := [Vector2(0.22, 0.12), Vector2(0.69, 0.31)]
+	var sites := [Vector2(0.41, 0.17), Vector2(0.57, 0.57)]
 	if enemy_type == "boss2":
-		sites = [Vector2(0.32, 0.12), Vector2(0.66, 0.43)]
+		sites = [Vector2(0.36, 0.15), Vector2(0.69, 0.49)]
 	elif enemy_type == "boss3":
 		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37)]
 	var dimensions := sprite.texture.get_size() * sprite.scale
