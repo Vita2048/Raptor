@@ -128,11 +128,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(44, -182), "length": 118.0, "width": 34.0},
 				
 			])
-			health = 5800
+			health = 3800
 			speed = 0.0
 			score_value = 6000
 			amplitude = 210.0
-			fire_interval = 0.30
+			fire_interval = 0.01
 		"interceptor1":
 			sprite.texture = AssetDB.ship_textures["interceptor1"]
 			# Texture is 642x609 — scale to match the ~123px display size of other interceptors
@@ -205,11 +205,11 @@ func spawn(kind: String, start_position: Vector2) -> void:
 				{"position": Vector2(9.0, -108.0), "length": 150.0, "width": 25.5},
 				{"position": Vector2(51.0, -112.5), "length": 168.0, "width": 36.0}
 			])
-			health = 7200
+			health = 5200
 			speed = 0.0
 			score_value = 8200
 			amplitude = 165.0
-			fire_interval = 0.24
+			fire_interval = 0.01
 		_:
 			sprite.texture = AssetDB.ship_textures["interceptor"]
 			sprite.scale = Vector2.ONE * 0.9

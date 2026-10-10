@@ -166,3 +166,8 @@ Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/building_wrecks
 ## Sector crater tints
 
 Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/crater_tint_smoke.gd` to render the three crater palettes and verify persistent remains blend to the next sector over five seconds. Saves `artifacts/review/crater-sector-tints.png`. Level 1 retains the original sand tint; Level 2 uses desaturated concrete dust; Level 3 uses cooler slate rubble. Both vehicle and building remains use the shared shader, preserving texture detail and alpha.
+
+
+## Building destruction variety
+
+Each lethal building hit rolls once: 50% leaves its matching wreck and crater, 50% leaves only a crater with a 30% larger explosion. Vehicle destruction is unchanged. Run `Godot_v4.7-stable_win64_console.exe --headless --path . --script tests/destruction_variety_smoke.gd` to exercise both outcomes on all five buildings, verify explosion scaling, one-time score/roll, and reuse. Wreck-art preview tests seed their outcome to remain deterministic.

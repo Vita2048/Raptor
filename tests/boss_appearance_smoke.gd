@@ -66,4 +66,3 @@ func _run() -> void:
 	assert(root.get_texture().get_image().save_png("res://artifacts/review/boss-phases.png") == OK)
 	print("BOSS_APPEARANCE_OK: thresholds, all hulls, wing telegraphs, smoke/fire, pool reset")
 	quit()
-

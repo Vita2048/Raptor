@@ -27,7 +27,7 @@ func _apply_sector_tint(level: int, gradual := true) -> void:
 		crater_material.set_shader_parameter("saturation", CRATER_SATURATION[index])
 	queue_redraw()
 
-func configure(dimensions: Vector2, wreck_texture: Texture2D = null) -> void:
+func configure(dimensions: Vector2, wreck_texture: Texture2D = null, explosion_scale := 1.0) -> void:
 	radius = maxf(dimensions.x, dimensions.y) * 0.5
 	var crater := Sprite2D.new()
 	crater.name = "Crater"
@@ -58,7 +58,8 @@ func configure(dimensions: Vector2, wreck_texture: Texture2D = null) -> void:
 	for i in range(14):
 		debris.append(Vector2.from_angle(random.randf_range(0, TAU)) * random.randf_range(radius * 0.3, radius * 0.85))
 	var blast := preload("res://scenes/ExplosionEffect.tscn").instantiate()
-	blast.configure(false, clampf(radius / 65.0, 0.7, 1.5))
+	blast.name = "DestructionBlast"
+	blast.configure(false, clampf(radius / 65.0, 0.7, 1.5) * explosion_scale)
 	add_child(blast)
 	blast.burst()
 

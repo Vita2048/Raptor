@@ -8,10 +8,12 @@ var health := 90
 var max_health := 90
 var destroyed := false
 var remains: Node2D
+var destruction_random := RandomNumberGenerator.new()
 var hit_time := 0.0
 var damage_indicator := 0.0
 
 func _ready() -> void:
+	destruction_random.randomize()
 	collision_layer = 2
 	collision_mask = 4
 	monitoring = true
@@ -120,14 +122,15 @@ func take_damage(amount: int) -> void:
 	GameState.add_score(int(sprite.texture.get_meta("score", 350)))
 	GameState.record_kill("structure")
 	queue_redraw()
-	call_deferred("_create_remains")
+	call_deferred("_create_remains", destruction_random.randf() < 0.5)
 
-func _create_remains() -> void:
+func _create_remains(keep_wreck: bool) -> void:
 	if not destroyed:
 		return
 	remains = preload("res://scripts/GroundRemains.gd").new()
 	add_child(remains)
-	remains.configure(footprint, sprite.texture.get_meta("destroyed_texture", null))
+	var wreck: Texture2D = sprite.texture.get_meta("destroyed_texture", null) if keep_wreck else null
+	remains.configure(footprint, wreck, 1.0 if keep_wreck else 1.3)
 
 func on_pool_acquired() -> void:
 	set_deferred("monitoring", true)

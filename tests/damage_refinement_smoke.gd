@@ -21,6 +21,12 @@ func _run() -> void:
 		building.set_visual_scale(Vector2.ONE * 0.34)
 		building.reset_structure()
 		if i == 1:
+			# Fix the random outcome for this wreck-art verification.
+			for candidate in range(100):
+				building.destruction_random.seed = candidate
+				if building.destruction_random.randf() < 0.5:
+					building.destruction_random.seed = candidate
+					break
 			building.take_damage(building.health)
 			await process_frame
 			var crater = building.remains.get_node("Crater")
