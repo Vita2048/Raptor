@@ -3,206 +3,236 @@
 [ext_resource type="Script" path="res://scripts/BossCollisionData.gd" id="1_gjidc"]
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_4lysr"]
-points = PackedVector2Array(120, -83.5, 119, -65.5, 119, -66.5)
+points = PackedVector2Array(-566, -17, -516, -13, -517, -13)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_kjetr"]
-points = PackedVector2Array(-35, -555.5, -12, -651.5, -12, -650.5)
+points = PackedVector2Array(-395, -275, -526, -340, -525, -340)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_mhupq"]
-points = PackedVector2Array(-35, -555.5, -12, -650.5, -3, -578.5, -118, -83.5)
+points = PackedVector2Array(-125, -516, -111, -534, -111, -532)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ik4c0"]
-points = PackedVector2Array(22, 732.5, -1, 790.5, -1, 789.5)
+points = PackedVector2Array(86, 406, 71, 392, 72, 392)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_osoo3"]
-points = PackedVector2Array(69, 511.5, 22, 732.5, -1, 789.5, -70, 509.5, -70, 500.5, 102, 278.5)
+points = PackedVector2Array(9, -455, 31, -474, 31, -473)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_8mgj1"]
-points = PackedVector2Array(-421, -788.5, -421, -790.5, -194, -568.5)
+points = PackedVector2Array(389, 156, 400, 171, 399, 171)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_rot54"]
-points = PackedVector2Array(-267, -343.5, -424, -670.5, -424, -733.5, -421, -788.5, -194, -568.5, -266, -343.5)
+points = PackedVector2Array(-125, -516, -111, -532, -71, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_af5gr"]
-points = PackedVector2Array(248, 170.5, 227, 173.5, 227, 171.5)
+points = PackedVector2Array(350, -579, 363, -585, 363, -584)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_n0ral"]
-points = PackedVector2Array(243, -22.5, 266, 2.5, 271, 55.5, 270, 55.5, -118, -83.5, 119, -66.5)
+points = PackedVector2Array(-43, 596, -61, 604, -61, 603, -54, 459)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_vkfjo"]
-points = PackedVector2Array(-238, -210.5, -237, -180.5, -238, -180.5)
+points = PackedVector2Array(599, -139, 608, -118, 607, -118, 512, -176)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_v2kmw"]
-points = PackedVector2Array(-205, -90.5, -141, -92.5, -141, -91.5, -271, 11.5)
+points = PackedVector2Array(563, -19, 567, -9, 566, -9, 517, -12)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_8vx38"]
-points = PackedVector2Array(421, -790.5, 424, -670.5, 423, -670.5, 417, -790.5)
+points = PackedVector2Array(517, -12, 563, -20, 563, -19)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_qwgpj"]
-points = PackedVector2Array(9, -648.5, 19, -648.5, 19, -593.5, -2, -578.5)
+points = PackedVector2Array(-395, -275, -525, -340, -511, -360, -509, -360)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_buna4"]
-points = PackedVector2Array(267, -331.5, 267, -258.5, 266, -258.5)
+points = PackedVector2Array(-393, -275, -395, -275, -509, -360, -413, -412, -71, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_w5egj"]
-points = PackedVector2Array(-238, -210.5, -238, -180.5, -250, -180.5, -250, -207.5)
+points = PackedVector2Array(315, 268, 318, 291, 317, 291, 103, 264)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_qwj8r"]
-points = PackedVector2Array(-238, -210.5, -250, -207.5, -252, -244.5)
+points = PackedVector2Array(-238, -605, -238, -606, -177, -599, -177, -598)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ir0dn"]
-points = PackedVector2Array(194, -568.5, 417, -790.5, 423, -670.5, 267, -344.5)
+points = PackedVector2Array(-54, 459, -42, 596, -43, 596)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_jgvq4"]
-points = PackedVector2Array(86, -699.5, 124, -698.5, 124, -696.5, 37, -559.5, 84, -699.5)
+points = PackedVector2Array(-440, 158, -449, 156, -566, -9, -566, -17, -517, -13, -426, 92, -439, 158)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_x5jhs"]
-points = PackedVector2Array(-151, 188.5, -185, 187.5, -185, 186.5, -118, -65.5, -149, 188.5)
+points = PackedVector2Array(350, -579, 363, -584, 414, -412, 331, -513)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_sl6u8"]
-points = PackedVector2Array(249, -178.5, 226, -179.5, 226, -198.5, 253, -212.5, 250, -178.5)
+points = PackedVector2Array(9, -455, 31, -473, 72, -417, 9, -454)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ef305"]
-points = PackedVector2Array(252, 135.5, 248, 170.5, 227, 171.5, 222, 121.5, 252, 96.5)
+points = PackedVector2Array(-88, 354, -87, 354, -70, 392, -70, 395, -83, 395, -264, 379)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_efjur"]
-points = PackedVector2Array(-222, -238.5, -226, -178.5, -227, -178.5, -236, -179.5, -236, -208.5)
+points = PackedVector2Array(-440, 158, -449, 158, -449, 156)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_n0txd"]
-points = PackedVector2Array(-222, -238.5, -236, -208.5, -237, -210.5, -252, -244.5)
+points = PackedVector2Array(186, -601, 270, -599, 270, -598)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_gfq1h"]
-points = PackedVector2Array(-222, 122.5, -226, 172.5, -227, 172.5, -249, 169.5, -249, 140.5)
+points = PackedVector2Array(43, 583, 54, 455, 55, 455)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_g72hn"]
-points = PackedVector2Array(-222, 122.5, -249, 140.5, -251, 96.5, -119, -65.5)
+points = PackedVector2Array(433, 90, 517, -12, 566, -9, 449, 159, 448, 159)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_4h3ux"]
-points = PackedVector2Array(252, 135.5, 249, 170.5, 248, 170.5)
+points = PackedVector2Array(154, -553, 158, -577, 159, -577, 297, -544, 154, -545)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_wbyls"]
-points = PackedVector2Array(253, -212.5, 226, -198.5, 220, -237.5, 253, -244.5)
+points = PackedVector2Array(-31, -474, -22, -474, -17, -455, -68, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_q45gf"]
-points = PackedVector2Array(102, 278.5, 70, 511.5, 69, 511.5)
+points = PackedVector2Array(389, 156, 399, 171, 315, 266, 103, 264)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_jsqyu"]
-points = PackedVector2Array(-2, -578.5, 8, -648.5, 9, -648.5)
+points = PackedVector2Array(331, -513, 349, -579, 350, -579)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_lbvag"]
-points = PackedVector2Array(-2, -578.5, 19, -593.5, 37, -553.5, -118, -83.5)
+points = PackedVector2Array(-54, 450, -54, 459, -61, 603, -264, 381, -264, 379, -86, 410)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_fcwub"]
-points = PackedVector2Array(154, -94.5, 214, -85.5, 214, -83.5)
+points = PackedVector2Array(-413, -413, -361, -586, -356, -586, -327, -512)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ehyw3"]
-points = PackedVector2Array(-156, -606.5, -144, -667.5, -143, -667.5, -36, -555.5, -156, -604.5)
+points = PackedVector2Array(89, -465, 111, -533, 112, -533, 131, -519, 393, -275, 89, -456)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_go0p2"]
-points = PackedVector2Array(69, 511.5, 23, 732.5, 22, 732.5)
+points = PackedVector2Array(512, -176, 599, -140, 599, -139)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_t6k62"]
-points = PackedVector2Array(102, 278.5, -70, 500.5, -102, 265.5, 102, 267.5)
+points = PackedVector2Array(-295, -550, -276, -594, -275, -594, -127, -516, -295, -544)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_j1mcw"]
-points = PackedVector2Array(-83, -702.5, -79, -713.5, -75, -713.5, -36, -555.5, -83, -700.5)
+points = PackedVector2Array(607, -118, 588, -75, 587, -75, 512, -176)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_civ8x"]
-points = PackedVector2Array(-123, -697.5, -83, -700.5, -36, -555.5)
+points = PackedVector2Array(415, -412, 513, -358, 526, -341, 526, -335, 393, -275, 414, -412)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_7gi3w"]
-points = PackedVector2Array(37, -559.5, 76, -713.5, 80, -713.5, 84, -699.5)
+points = PackedVector2Array(415, -412, 513, -359, 513, -358)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_e6sbr"]
-points = PackedVector2Array(-266, -343.5, -194, -568.5, -192, -568.5, -36, -555.5, -267, -268.5)
+points = PackedVector2Array(-413, -413, -327, -512, -127, -516, -125, -516, -71, -418, -413, -412)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_q4m83"]
-points = PackedVector2Array(-118, -83.5, 193, -568.5, 194, -568.5, 267, -344.5, 267, -331.5, 220, -237.5)
+points = PackedVector2Array(-88, 305, -88, 314, -95, 318, -314, 266, -102, 267)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_bhm0b"]
-points = PackedVector2Array(37, -559.5, 124, -696.5, 145, -666.5, 145, -660.5)
+points = PackedVector2Array(317, 291, 264, 382, 262, 382, 103, 264)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_76fmx"]
-points = PackedVector2Array(37, -559.5, 145, -660.5, 156, -605.5, 37, -553.5)
+points = PackedVector2Array(62, 254, 23, 318, -23, 318, -63, 251, 62, 252)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ow368"]
-points = PackedVector2Array(222, 123.5, 208, 164.5, 207, 164.5, -118, -83.5, 222, 121.5)
+points = PackedVector2Array(86, 406, 72, 392, 103, 264, 262, 382)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_xkesg"]
-points = PackedVector2Array(-192, -568.5, -181, -596.5, -179, -596.5)
+points = PackedVector2Array(-17, -455, -11, -455, 9, -454, 72, -417, -389, 142, -391, 142, -425, 92, -68, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_rx86j"]
-points = PackedVector2Array(-237, -210.5, -238, -210.5, -252, -244.5)
+points = PackedVector2Array(262, 382, 61, 605, 56, 605, 43, 596, 43, 583, 55, 455, 86, 410)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_dcruc"]
-points = PackedVector2Array(156, -605.5, 157, -605.5, 183, -594.5, 183, -592.5, -118, -83.5, 37, -553.5)
+points = PackedVector2Array(262, 382, 86, 410, 86, 406)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ykluc"]
-points = PackedVector2Array(-119, -65.5, -251, 96.5, -252, 96.5, -271, 53.5, -271, 11.5, -141, -91.5)
+points = PackedVector2Array(315, 266, 315, 268, 103, 264)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_rjsjx"]
-points = PackedVector2Array(150, 188.5, 150, 190.5, -102, 265.5, -103, 265.5, -149, 188.5, -118, -65.5)
+points = PackedVector2Array(72, -417, 389, 143, 389, 156, 103, 264, 102, 264, 78, 246)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_5hh26"]
-points = PackedVector2Array(150, 190.5, 102, 267.5, -102, 265.5)
+points = PackedVector2Array(-510, -175, -510, -176, -393, -258)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_34hcq"]
-points = PackedVector2Array(-124, -697.5, -123, -697.5, -36, -555.5, -143, -667.5)
+points = PackedVector2Array(-399, 171, -399, 168, -389, 142, -77, 246, -77, 247, -102, 265, -314, 266, -315, 266)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_7oj2f"]
-points = PackedVector2Array(-271, 11.5, -207, -90.5, -205, -90.5)
+points = PackedVector2Array(-86, 410, -85, 410, -54, 450)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_a55h5"]
-points = PackedVector2Array(-118, -83.5, -119, -83.5, -218, -238.5, -35, -555.5)
+points = PackedVector2Array(-83, 397, -86, 410, -264, 379, -83, 395)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_k4n1q"]
-points = PackedVector2Array(-221, 122.5, -222, 122.5, -119, -65.5, -118, -65.5)
+points = PackedVector2Array(-82, 333, -82, 340, -88, 354, -264, 379, -317, 292, -317, 289, -314, 266, -95, 318)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_nw5uw"]
-points = PackedVector2Array(154, -94.5, 214, -83.5, 243, -22.5, 119, -66.5, 148, -94.5)
+points = PackedVector2Array(-238, -605, -177, -598, -127, -516, -275, -594)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_jwxum"]
-points = PackedVector2Array(244, -22.5, 266, -5.5, 266, 2.5, 243, -22.5)
+points = PackedVector2Array(-327, -513, -295, -544, -127, -516, -327, -512)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_cgqu2"]
-points = PackedVector2Array(-35, -555.5, -252, -244.5, -253, -244.5, -267, -261.5, -267, -268.5, -36, -555.5)
+points = PackedVector2Array(-393, -259, -393, -275, -71, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_acgdb"]
-points = PackedVector2Array(-207, 162.5, -221, 122.5, -118, -65.5, -185, 186.5)
+points = PackedVector2Array(-393, -258, -393, -259, -71, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_1ssqy"]
-points = PackedVector2Array(207, 164.5, 184, 188.5, 177, 188.5, -118, -83.5)
+points = PackedVector2Array(-95, 318, -94, 318, -82, 333)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_8q78q"]
-points = PackedVector2Array(-192, -568.5, -179, -596.5, -156, -604.5, -36, -555.5)
+points = PackedVector2Array(-102, 265, -102, 267, -314, 266)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_3q8ml"]
-points = PackedVector2Array(-185, 186.5, -207, 164.5, -207, 162.5)
+points = PackedVector2Array(328, -513, 331, -513, 414, -412, 393, -275)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_50agj"]
-points = PackedVector2Array(150, 188.5, -118, -65.5, -118, -83.5, 177, 188.5)
+points = PackedVector2Array(517, -13, 517, -12, 433, 90, 431, 90, 394, -258, 395, -258, 510, -176)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_xlirn"]
-points = PackedVector2Array(252, 96.5, 222, 121.5, -118, -83.5, 270, 55.5)
+points = PackedVector2Array(-425, 92, -426, 92, -517, -13, -510, -175, -393, -258, -71, -418, -68, -418)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_umwc0"]
-points = PackedVector2Array(267, -331.5, 266, -258.5, 253, -244.5, 220, -237.5)
+points = PackedVector2Array(-608, -119, -608, -126, -593, -143, -590, -143, -587, -77)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_chanw"]
-points = PackedVector2Array(-222, -238.5, -252, -244.5, -35, -555.5, -218, -238.5)
+points = PackedVector2Array(-517, -13, -587, -75, -587, -77, -510, -175)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_chwsb"]
-points = PackedVector2Array(-118, -83.5, -3, -578.5, -2, -578.5)
+points = PackedVector2Array(297, -544, 299, -544, 328, -513, 393, -275, 131, -519, 131, -520)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_t7sly"]
-points = PackedVector2Array(-118, -83.5, 183, -592.5, 193, -568.5)
+points = PackedVector2Array(72, -417, 72, -440, 89, -456, 393, -275, 393, -274)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_qcmyg"]
-points = PackedVector2Array(-118, -83.5, 220, -237.5, 220, -236.5, 120, -87.5)
+points = PackedVector2Array(-587, -77, -590, -143, -510, -175)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_vkc5n"]
-points = PackedVector2Array(-118, -83.5, 120, -87.5, 120, -83.5, 119, -66.5)
+points = PackedVector2Array(512, -176, 587, -75, 517, -13, 510, -176)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_kkclv"]
+points = PackedVector2Array(270, -598, 291, -577, 291, -574, 186, -601)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_mrn4y"]
+points = PackedVector2Array(186, -601, 291, -574, 297, -544, 159, -577, 183, -601)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_gnkv5"]
+points = PackedVector2Array(131, -520, 154, -545, 297, -544)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_ig1vs"]
+points = PackedVector2Array(72, -417, 393, -274, 394, -258)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_sj0bk"]
+points = PackedVector2Array(394, -258, 431, 90, 425, 94, 72, -417)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_sxyv2"]
+points = PackedVector2Array(425, 94, 425, 96, 389, 143, 72, -417)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_0q7oy"]
+points = PackedVector2Array(72, -417, 78, 246, 75, 246)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_kbde6"]
+points = PackedVector2Array(72, -417, 75, 246, 62, 252, -63, 251)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_dmcry"]
+points = PackedVector2Array(72, -417, -63, 251, -65, 251, -77, 246)
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_geed0"]
+points = PackedVector2Array(72, -417, -77, 246, -389, 142)
 
 [resource]
 script = ExtResource("1_gjidc")
-shapes = Array[ConvexPolygonShape2D]([SubResource("ConvexPolygonShape2D_4lysr"), SubResource("ConvexPolygonShape2D_kjetr"), SubResource("ConvexPolygonShape2D_mhupq"), SubResource("ConvexPolygonShape2D_ik4c0"), SubResource("ConvexPolygonShape2D_osoo3"), SubResource("ConvexPolygonShape2D_8mgj1"), SubResource("ConvexPolygonShape2D_rot54"), SubResource("ConvexPolygonShape2D_af5gr"), SubResource("ConvexPolygonShape2D_n0ral"), SubResource("ConvexPolygonShape2D_vkfjo"), SubResource("ConvexPolygonShape2D_v2kmw"), SubResource("ConvexPolygonShape2D_8vx38"), SubResource("ConvexPolygonShape2D_qwgpj"), SubResource("ConvexPolygonShape2D_buna4"), SubResource("ConvexPolygonShape2D_w5egj"), SubResource("ConvexPolygonShape2D_qwj8r"), SubResource("ConvexPolygonShape2D_ir0dn"), SubResource("ConvexPolygonShape2D_jgvq4"), SubResource("ConvexPolygonShape2D_x5jhs"), SubResource("ConvexPolygonShape2D_sl6u8"), SubResource("ConvexPolygonShape2D_ef305"), SubResource("ConvexPolygonShape2D_efjur"), SubResource("ConvexPolygonShape2D_n0txd"), SubResource("ConvexPolygonShape2D_gfq1h"), SubResource("ConvexPolygonShape2D_g72hn"), SubResource("ConvexPolygonShape2D_4h3ux"), SubResource("ConvexPolygonShape2D_wbyls"), SubResource("ConvexPolygonShape2D_q45gf"), SubResource("ConvexPolygonShape2D_jsqyu"), SubResource("ConvexPolygonShape2D_lbvag"), SubResource("ConvexPolygonShape2D_fcwub"), SubResource("ConvexPolygonShape2D_ehyw3"), SubResource("ConvexPolygonShape2D_go0p2"), SubResource("ConvexPolygonShape2D_t6k62"), SubResource("ConvexPolygonShape2D_j1mcw"), SubResource("ConvexPolygonShape2D_civ8x"), SubResource("ConvexPolygonShape2D_7gi3w"), SubResource("ConvexPolygonShape2D_e6sbr"), SubResource("ConvexPolygonShape2D_q4m83"), SubResource("ConvexPolygonShape2D_bhm0b"), SubResource("ConvexPolygonShape2D_76fmx"), SubResource("ConvexPolygonShape2D_ow368"), SubResource("ConvexPolygonShape2D_xkesg"), SubResource("ConvexPolygonShape2D_rx86j"), SubResource("ConvexPolygonShape2D_dcruc"), SubResource("ConvexPolygonShape2D_ykluc"), SubResource("ConvexPolygonShape2D_rjsjx"), SubResource("ConvexPolygonShape2D_5hh26"), SubResource("ConvexPolygonShape2D_34hcq"), SubResource("ConvexPolygonShape2D_7oj2f"), SubResource("ConvexPolygonShape2D_a55h5"), SubResource("ConvexPolygonShape2D_k4n1q"), SubResource("ConvexPolygonShape2D_nw5uw"), SubResource("ConvexPolygonShape2D_jwxum"), SubResource("ConvexPolygonShape2D_cgqu2"), SubResource("ConvexPolygonShape2D_acgdb"), SubResource("ConvexPolygonShape2D_1ssqy"), SubResource("ConvexPolygonShape2D_8q78q"), SubResource("ConvexPolygonShape2D_3q8ml"), SubResource("ConvexPolygonShape2D_50agj"), SubResource("ConvexPolygonShape2D_xlirn"), SubResource("ConvexPolygonShape2D_umwc0"), SubResource("ConvexPolygonShape2D_chanw"), SubResource("ConvexPolygonShape2D_chwsb"), SubResource("ConvexPolygonShape2D_t7sly"), SubResource("ConvexPolygonShape2D_qcmyg"), SubResource("ConvexPolygonShape2D_vkc5n")])
+shapes = Array[ConvexPolygonShape2D]([SubResource("ConvexPolygonShape2D_4lysr"), SubResource("ConvexPolygonShape2D_kjetr"), SubResource("ConvexPolygonShape2D_mhupq"), SubResource("ConvexPolygonShape2D_ik4c0"), SubResource("ConvexPolygonShape2D_osoo3"), SubResource("ConvexPolygonShape2D_8mgj1"), SubResource("ConvexPolygonShape2D_rot54"), SubResource("ConvexPolygonShape2D_af5gr"), SubResource("ConvexPolygonShape2D_n0ral"), SubResource("ConvexPolygonShape2D_vkfjo"), SubResource("ConvexPolygonShape2D_v2kmw"), SubResource("ConvexPolygonShape2D_8vx38"), SubResource("ConvexPolygonShape2D_qwgpj"), SubResource("ConvexPolygonShape2D_buna4"), SubResource("ConvexPolygonShape2D_w5egj"), SubResource("ConvexPolygonShape2D_qwj8r"), SubResource("ConvexPolygonShape2D_ir0dn"), SubResource("ConvexPolygonShape2D_jgvq4"), SubResource("ConvexPolygonShape2D_x5jhs"), SubResource("ConvexPolygonShape2D_sl6u8"), SubResource("ConvexPolygonShape2D_ef305"), SubResource("ConvexPolygonShape2D_efjur"), SubResource("ConvexPolygonShape2D_n0txd"), SubResource("ConvexPolygonShape2D_gfq1h"), SubResource("ConvexPolygonShape2D_g72hn"), SubResource("ConvexPolygonShape2D_4h3ux"), SubResource("ConvexPolygonShape2D_wbyls"), SubResource("ConvexPolygonShape2D_q45gf"), SubResource("ConvexPolygonShape2D_jsqyu"), SubResource("ConvexPolygonShape2D_lbvag"), SubResource("ConvexPolygonShape2D_fcwub"), SubResource("ConvexPolygonShape2D_ehyw3"), SubResource("ConvexPolygonShape2D_go0p2"), SubResource("ConvexPolygonShape2D_t6k62"), SubResource("ConvexPolygonShape2D_j1mcw"), SubResource("ConvexPolygonShape2D_civ8x"), SubResource("ConvexPolygonShape2D_7gi3w"), SubResource("ConvexPolygonShape2D_e6sbr"), SubResource("ConvexPolygonShape2D_q4m83"), SubResource("ConvexPolygonShape2D_bhm0b"), SubResource("ConvexPolygonShape2D_76fmx"), SubResource("ConvexPolygonShape2D_ow368"), SubResource("ConvexPolygonShape2D_xkesg"), SubResource("ConvexPolygonShape2D_rx86j"), SubResource("ConvexPolygonShape2D_dcruc"), SubResource("ConvexPolygonShape2D_ykluc"), SubResource("ConvexPolygonShape2D_rjsjx"), SubResource("ConvexPolygonShape2D_5hh26"), SubResource("ConvexPolygonShape2D_34hcq"), SubResource("ConvexPolygonShape2D_7oj2f"), SubResource("ConvexPolygonShape2D_a55h5"), SubResource("ConvexPolygonShape2D_k4n1q"), SubResource("ConvexPolygonShape2D_nw5uw"), SubResource("ConvexPolygonShape2D_jwxum"), SubResource("ConvexPolygonShape2D_cgqu2"), SubResource("ConvexPolygonShape2D_acgdb"), SubResource("ConvexPolygonShape2D_1ssqy"), SubResource("ConvexPolygonShape2D_8q78q"), SubResource("ConvexPolygonShape2D_3q8ml"), SubResource("ConvexPolygonShape2D_50agj"), SubResource("ConvexPolygonShape2D_xlirn"), SubResource("ConvexPolygonShape2D_umwc0"), SubResource("ConvexPolygonShape2D_chanw"), SubResource("ConvexPolygonShape2D_chwsb"), SubResource("ConvexPolygonShape2D_t7sly"), SubResource("ConvexPolygonShape2D_qcmyg"), SubResource("ConvexPolygonShape2D_vkc5n"), SubResource("ConvexPolygonShape2D_kkclv"), SubResource("ConvexPolygonShape2D_mrn4y"), SubResource("ConvexPolygonShape2D_gnkv5"), SubResource("ConvexPolygonShape2D_ig1vs"), SubResource("ConvexPolygonShape2D_sj0bk"), SubResource("ConvexPolygonShape2D_sxyv2"), SubResource("ConvexPolygonShape2D_0q7oy"), SubResource("ConvexPolygonShape2D_kbde6"), SubResource("ConvexPolygonShape2D_dmcry"), SubResource("ConvexPolygonShape2D_geed0")])

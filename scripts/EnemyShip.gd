@@ -197,12 +197,13 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			fire_interval = 0.65
 		"boss2":
 			sprite.texture = AssetDB.ship_textures["boss2"]
-			sprite.scale = Vector2.ONE * 227.0 / sprite.texture.get_width()
+			# Compact hull: approximately 320px square, with its bow at the existing shot origin.
+			sprite.scale = Vector2.ONE * 320.0 / sprite.texture.get_width()
 			_configure_silhouette_collision(303.0)
-			# Rear propulsion nozzles on the approved red metallic cruiser.
+			# Twin rear nozzles on the approved burgundy assault ship.
 			_configure_exhausts([
-				{"position": Vector2(-31, -187), "length": 168.0, "width": 26.0},
-				{"position": Vector2(31, -187), "length": 168.0, "width": 26.0}
+				{"position": Vector2(-60, -157), "length": 168.0, "width": 32.0},
+				{"position": Vector2(60, -157), "length": 168.0, "width": 32.0}
 			])
 			health = 5200
 			speed = 0.0

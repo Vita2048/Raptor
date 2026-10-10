@@ -113,7 +113,7 @@ func load_all() -> void:
 		"boss2": _safe_load_tex(SHIPS_DIR + "Bosship2.png")
 	}
 	# Trim generated canvas padding without altering the approved sprite pixels.
-	var boss_bounds := {"boss": Rect2(76, 67, 872, 1399), "boss2": Rect2(44, 50, 848, 1581)}
+	var boss_bounds := {"boss": Rect2(76, 67, 872, 1399), "boss2": Rect2(19, 20, 1216, 1212)}
 	for kind in boss_bounds:
 		var ship := AtlasTexture.new()
 		ship.atlas = ship_textures[kind]
