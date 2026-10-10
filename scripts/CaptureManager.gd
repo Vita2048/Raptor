@@ -2,13 +2,17 @@ extends Node
 ## Desktop-only capture controls.
 ## S takes a PNG screenshot at native viewport resolution.
 ## R toggles 30fps recording (JPG sequence + manifest, plus a background MP4
-## encode when ffmpeg is on PATH).
+## encode when ffmpeg is on PATH). Game audio from the Master bus is captured
+## alongside the frames (audio.wav) and muxed into the MP4 when present.
 ## Created from Main; keeps working while paused (PROCESS_MODE_ALWAYS).
 ##
 ## Performance design: the game thread only does the viewport readback (a few
 ## ms). JPEG encoding and file writes run on a worker thread, so gameplay stays
 ## fluent while recording. Frames are only dropped if the worker falls far
 ## behind (counted in dropped_frames and the manifest).
+## Audio stays in sync by lock-step: every pushed video frame appends exactly
+## mix_rate/30 newest audio samples (pause drains-and-discards, hitches snap
+## to newest instead of accumulating lag), so the WAV is always frames/30 long.
 
 const CAPTURE_FPS := 30.0
 const CAPTURE_INTERVAL := 1.0 / CAPTURE_FPS
@@ -38,6 +42,8 @@ var _toast_tween: Tween
 var is_recording := false
 var recorded_frames := 0
 var dropped_frames := 0
+# True once audio.wav was written for the finished session.
+var has_audio := false
 # Set to false in tests so no background ffmpeg process outlives the run.
 var auto_mux := true
 
@@ -58,6 +64,21 @@ var _queue: Array = []
 var _thread_exit := false
 # ffmpeg probe cache: 0 = unknown, 1 = available, 2 = missing.
 var _ffmpeg_state := 0
+# Game-audio capture, locked to the video clock for A/V sync.
+# The previous wall-clock design (AudioEffectRecord) drifted: video freezes on
+# pause and skips dropped frames while wall-clock audio kept running, so every
+# pause/hitch offset the rest of the take. Instead each pushed video frame
+# appends exactly mix_rate/30 samples (fractional carry via _pushed, so odd
+# rates stay exact), taking the NEWEST ring samples: hitches cut the gap from
+# both streams rather than accumulating lag. Pause drains-and-discards, so
+# pause gaps exist in neither stream. Result: WAV length is always frames/30.
+const AUDIO_FILENAME := "audio.wav"
+var _audio_capture: AudioEffectCapture = null
+var _audio_bus := 0
+var _audio_recording := false
+var _audio_mix_rate := 44100
+var _audio_pcm := PackedByteArray()
+var _audio_samples_written := 0
 
 func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
@@ -71,6 +92,7 @@ func _ready() -> void:
 
 func _exit_tree() -> void:
 	# Scene reload or quit mid-recording: stop the worker, keep what we have.
+	_stop_audio_capture()
 	_mutex.lock()
 	_thread_exit = true
 	dropped_frames += _queue.size()
@@ -82,6 +104,7 @@ func _exit_tree() -> void:
 	if _session_dir == "" or not DirAccess.dir_exists_absolute(_session_dir):
 		return
 	if _pushed > 0:
+		_save_audio_capture()
 		_write_manifest()
 		if auto_mux:
 			_try_mux_mp4()
@@ -101,6 +124,9 @@ func _process(delta: float) -> void:
 	if not is_recording:
 		return
 	if get_tree().paused:
+		# Video freezes while paused: discard the pause audio too, or the
+		# menu clicks would leak into the take and offset everything after.
+		_drain_audio_capture()
 		return
 	_record_elapsed += delta
 	_rec_tick += delta
@@ -134,6 +160,7 @@ func _on_frame_post_draw() -> void:
 		return
 	var img := _capture_image()
 	_mutex.lock()
+	var pushed_frame := false
 	if img == null:
 		dropped_frames += 1
 	elif _queue.size() >= MAX_QUEUE:
@@ -141,8 +168,12 @@ func _on_frame_post_draw() -> void:
 	else:
 		_queue.push_back({"idx": _pushed, "img": img})
 		_pushed += 1
+		pushed_frame = true
 		_sem.post()
 	_mutex.unlock()
+	if pushed_frame:
+		# Same tick as the video frame: keeps the two streams locked.
+		_append_audio_frame()
 
 func _worker_loop() -> void:
 	while true:
@@ -217,16 +248,20 @@ func start_recording(bypass_platform_check := false) -> void:
 	_capture_pending = false
 	_rec_tick = 0.0
 	is_recording = true
+	has_audio = false
 	rec_label.visible = true
 	_refresh_rec_label()
+	_start_audio_capture()
 	VFX.audio.play_sound("charge")
-	_toast("Recording  30fps native  " + _session_dir)
+	_toast("Recording  30fps native + audio  " + _session_dir)
 
 func stop_recording() -> void:
 	if not is_recording:
 		return
 	is_recording = false
 	_capture_pending = false
+	# Freeze the audio take now so the stop/finalize UI clicks stay out of it.
+	_stop_audio_capture()
 	if is_instance_valid(rec_label):
 		rec_label.visible = false
 	_mutex.lock()
@@ -245,9 +280,13 @@ func stop_recording() -> void:
 
 func _on_session_finalized() -> void:
 	# Runs on the main thread once the worker drained the stopped session.
+	# WAV save is a single short hitch here (tens of ms), never per-frame.
+	_save_audio_capture()
 	_write_manifest()
 	VFX.audio.play_sound("impact")
 	var msg := "Video saved  %d frames  %s" % [recorded_frames, _session_dir]
+	if has_audio:
+		msg += "  + audio"
 	if auto_mux:
 		if _ffmpeg_available():
 			if _try_mux_mp4():
@@ -319,11 +358,22 @@ func _write_manifest() -> void:
 	f.store_line("frames=%d" % recorded_frames)
 	f.store_line("dropped=%d" % dropped_frames)
 	f.store_line("pattern=frame_%05d.jpg")
+	# Audio is locked to the video clock (each pushed frame appends mix_rate/30
+	# samples), so the WAV is always frames/30 long: pauses and dropped frames
+	# cut the gap from both streams instead of offsetting the rest of the take.
+	# -shortest below is only belt-and-braces for single-sample rounding.
+	if has_audio:
+		f.store_line("audio=" + AUDIO_FILENAME)
+	else:
+		f.store_line("audio=none (silent, muted, or capture unsupported)")
 	if _ffmpeg_available():
 		f.store_line("mp4=auto-encoded on stop when ffmpeg is on PATH")
 	else:
 		f.store_line("mp4=skipped, ffmpeg not found on PATH (install it, then rerun the command below)")
-	f.store_line("ffmpeg -framerate 30 -i frame_%05d.jpg -c:v libx264 -pix_fmt yuv420p -crf 20 recording.mp4")
+	if has_audio:
+		f.store_line("ffmpeg -framerate 30 -i frame_%05d.jpg -i " + AUDIO_FILENAME + " -c:v libx264 -pix_fmt yuv420p -crf 20 -c:a aac -shortest recording.mp4")
+	else:
+		f.store_line("ffmpeg -framerate 30 -i frame_%05d.jpg -c:v libx264 -pix_fmt yuv420p -crf 20 recording.mp4")
 	f.close()
 
 func _ffmpeg_binary() -> String:
@@ -342,10 +392,108 @@ func _try_mux_mp4() -> bool:
 	if not _ffmpeg_available():
 		return false
 	var src := ProjectSettings.globalize_path(_session_dir)
+	var out := src.path_join("recording.mp4")
+	var audio_path := _session_dir + "/" + AUDIO_FILENAME
+	if has_audio and FileAccess.file_exists(audio_path):
+		var args_with_audio := PackedStringArray(["-y", "-framerate", "30", "-i",
+			src.path_join("frame_%05d.jpg"), "-i", src.path_join(AUDIO_FILENAME),
+			"-c:v", "libx264", "-pix_fmt", "yuv420p", "-crf", "20",
+			"-c:a", "aac", "-shortest", out])
+		return OS.create_process(_ffmpeg_binary(), args_with_audio, false) > 0
 	var args := PackedStringArray(["-y", "-framerate", "30", "-i",
 		src.path_join("frame_%05d.jpg"), "-c:v", "libx264",
-		"-pix_fmt", "yuv420p", "-crf", "20", src.path_join("recording.mp4")])
+		"-pix_fmt", "yuv420p", "-crf", "20", out])
 	return OS.create_process(_ffmpeg_binary(), args, false) > 0
+
+func _ensure_audio_capture() -> bool:
+	# Installs (once) an AudioEffectCapture on the Master bus. Safe to call on
+	# headless/Dummy drivers: capture then yields silence instead of an error.
+	# buffer_length must be set before the effect initializes (on add), hence
+	# 5s of headroom here; the per-frame drain keeps it near-empty anyway.
+	if _audio_capture == null:
+		_audio_capture = AudioEffectCapture.new()
+		_audio_capture.buffer_length = 5.0
+	_audio_bus = AudioServer.get_bus_index("Master")
+	if _audio_bus < 0:
+		return false
+	for i in range(AudioServer.get_bus_effect_count(_audio_bus)):
+		if AudioServer.get_bus_effect(_audio_bus, i) == _audio_capture:
+			return true
+	AudioServer.add_bus_effect(_audio_bus, _audio_capture)
+	return true
+
+func _start_audio_capture() -> void:
+	_audio_recording = false
+	_audio_pcm.resize(0)
+	_audio_samples_written = 0
+	if not _ensure_audio_capture():
+		return
+	_audio_mix_rate = AudioServer.get_mix_rate()
+	_audio_capture.clear_buffer()
+	_audio_recording = true
+
+func _stop_audio_capture() -> void:
+	_audio_recording = false
+
+func _drain_audio_capture() -> void:
+	# Discard pending samples without recording them (pause gaps).
+	if not _audio_recording or _audio_capture == null:
+		return
+	var avail := _audio_capture.get_frames_available()
+	if avail > 0:
+		_audio_capture.get_buffer(avail)
+
+func _append_audio_frame() -> void:
+	# Called on the game thread right after a video frame is pushed. Appends
+	# exactly the samples owed for _pushed frames at 30fps, newest-first, so
+	# the take can never drift: want_total is derived from the same counter
+	# that numbers the JPGs. Main-thread only; the worker never touches audio.
+	if not _audio_recording or _audio_capture == null:
+		return
+	var want_total := int(float(_pushed) * float(_audio_mix_rate) / CAPTURE_FPS)
+	var take := want_total - _audio_samples_written
+	if take <= 0:
+		return
+	var frames := PackedVector2Array()
+	var avail := _audio_capture.get_frames_available()
+	if avail > 0:
+		var buf := _audio_capture.get_buffer(avail)
+		if buf.size() >= take:
+			frames = buf.slice(buf.size() - take)
+		elif buf.size() > 0:
+			# Underflow (audio clock briefly behind): keep continuity, pad
+			# silence at the end so the count — and the sync — still holds.
+			frames = buf.duplicate()
+			frames.resize(take)
+	if frames.is_empty():
+		frames.resize(take)
+	_append_audio_pcm(frames)
+	_audio_samples_written += take
+
+func _append_audio_pcm(frames: PackedVector2Array) -> void:
+	var n := frames.size()
+	if n <= 0:
+		return
+	var base := _audio_pcm.size()
+	_audio_pcm.resize(base + n * 4)
+	for i in range(n):
+		var s := frames[i]
+		_audio_pcm.encode_s16(base + i * 4, int(clampf(s.x, -1.0, 1.0) * 32767.0))
+		_audio_pcm.encode_s16(base + i * 4 + 2, int(clampf(s.y, -1.0, 1.0) * 32767.0))
+
+func _save_audio_capture() -> void:
+	has_audio = false
+	if _session_dir == "" or _audio_pcm.is_empty():
+		return
+	if not DirAccess.dir_exists_absolute(_session_dir):
+		return
+	var stream := AudioStreamWAV.new()
+	stream.format = AudioStreamWAV.FORMAT_16_BITS
+	stream.mix_rate = _audio_mix_rate
+	stream.stereo = true
+	stream.data = _audio_pcm
+	if stream.save_to_wav(_session_dir + "/" + AUDIO_FILENAME) == OK:
+		has_audio = true
 
 func _refresh_rec_label() -> void:
 	var total := int(_record_elapsed)

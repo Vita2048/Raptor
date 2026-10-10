@@ -264,7 +264,7 @@ func _build_ui() -> void:
 	exit_button = _button(panel, Vector2(340, 380 if mobile else 458), Vector2(280, 62), "EXIT")
 	exit_button.pressed.connect(_on_exit_pressed)
 	if not mobile:
-		var capture_hint := _label(panel, Vector2(40, 524), Vector2(580, 26), "S SCREENSHOT  ·  R RECORD 30FPS  (DESKTOP)", 15, MUTED)
+		var capture_hint := _label(panel, Vector2(40, 524), Vector2(580, 26), "S SCREENSHOT  ·  R RECORD 30FPS+AUDIO  (DESKTOP)", 15, MUTED)
 		capture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 
 # ── Handlers ─────────────────────────────────────────────────────────

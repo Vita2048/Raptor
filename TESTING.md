@@ -35,13 +35,21 @@ Desktop builds only (disabled on Web/mobile and headless):
   hidden for the captured frame. Note `S` still steers the ship down while held;
   the screenshot fires once per press.
 - `R` starts/stops 30fps recording at native resolution: a JPG sequence
-  `user://recordings/REC_<timestamp>/frame_<n>.jpg` plus `manifest.txt` with
-  size/frame counts and an ffmpeg command. If `ffmpeg` is on PATH, an MP4 is
-  encoded in the background on stop. A red `● REC` timer shows while recording.
+  `user://recordings/REC_<timestamp>/frame_<n>.jpg`, game audio
+  `user://recordings/REC_<timestamp>/audio.wav` (Master-bus capture), plus
+  `manifest.txt` with size/frame counts and an ffmpeg command. If `ffmpeg` is
+  on PATH, an MP4 with audio (`-c:a aac -shortest`) is encoded in the
+  background on stop. A red `● REC` timer shows while recording.
   Recording pauses with the game and auto-stops after 3 minutes (5400 frames).
+  Audio is locked to the video clock (each pushed frame appends mix_rate/30
+  samples), so the WAV is always frames/30 long: pauses and dropped frames cut
+  the gap from both streams instead of offsetting the rest of the take.
 - Performance: the game thread only does the viewport readback; JPEG encoding
   runs on a worker thread, so gameplay stays fluent and is only affected while
-  recording is active (plus a one-frame hitch per screenshot). If the worker
+  recording is active (plus a one-frame hitch per screenshot). Audio capture
+  runs in the audio server at well under 0.1ms per mix block; the WAV save is
+  a single short hitch after stop, and the ffmpeg mux runs as a background
+  process. If the worker
   falls behind, frames are counted as dropped in the manifest instead of
   slowing the game. `RECORD_SCALE` in `scripts/CaptureManager.gd` stays `1.0`
   for full resolution; set it to `0.5` for half-resolution recording.
