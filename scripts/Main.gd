@@ -1,5 +1,6 @@
 extends Node2D
 
+const DebugOptions := preload("res://scripts/DebugOptions.gd")
 const ScrollingBackgroundScript := preload("res://scripts/ScrollingBackground.gd")
 const WorldSpawnerScript := preload("res://scripts/WorldSpawner.gd")
 const PlayerShipScript := preload("res://scripts/PlayerShip.gd")
@@ -31,11 +32,21 @@ func _ready() -> void:
 	GameState.reset(retry_same_sector)
 	if retry_same_sector:
 		GameState.restore_checkpoint()
+	if DebugOptions.menu_requested() and DebugOptions.selected_level > 0:
+		GameState.reset()
+		while GameState.current_level < DebugOptions.selected_level:
+			GameState.advance_level()
 	_build_scene()
 	VFX.warm_up()
-	if GameState.current_level > 1 and not preload("res://scripts/DebugOptions.gd").final_boss_requested():
+	if GameState.current_level > 1 and (DebugOptions.menu_requested() or not DebugOptions.final_boss_requested()):
 		world_spawner.rebuild_for_level(GameState.current_level)
-	if preload("res://scripts/DebugOptions.gd").final_boss_requested():
+	if DebugOptions.menu_requested():
+		var debug_menu := preload("res://scripts/DebugMenu.gd").new()
+		debug_menu.name = "DebugMenu"
+		add_child(debug_menu)
+		if DebugOptions.selected_level > 0 and DebugOptions.selected_boss:
+			enemy_manager._spawn_boss()
+	elif DebugOptions.final_boss_requested():
 		_start_final_boss_debug()
 
 func _start_final_boss_debug() -> void:

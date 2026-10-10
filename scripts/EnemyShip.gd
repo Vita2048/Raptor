@@ -26,6 +26,9 @@ var pool
 var sprite: Sprite2D
 var hit_material: ShaderMaterial
 var hit_strength := 0.0
+var boss_damage_stage := 0
+var boss_damage_blend := 0.0
+var damage_effect: Node2D
 var collision_shape: CollisionShape2D
 var silhouette_collision_polygons: Array[CollisionShape2D] = []
 var is_boss := false
@@ -50,6 +53,8 @@ func _ready() -> void:
 	charge_visual.z_index = 5
 	charge_visual.draw.connect(_draw_charge)
 	add_child(charge_visual)
+	damage_effect = preload("res://scripts/BossDamageEffect.gd").new()
+	add_child(damage_effect)
 	var shadow := preload("res://scripts/AircraftShadow.gd").new()
 	shadow.source = sprite
 	add_child(shadow)
@@ -218,10 +223,12 @@ func spawn(kind: String, start_position: Vector2) -> void:
 			score_value = 300
 			amplitude = 115.0
 			fire_interval = 1.4
+	_configure_boss_appearance()
 	max_health = health
 	fire_timer = randf_range(0.4, fire_interval)
 
 func _physics_process(delta: float) -> void:
+	_update_boss_appearance(delta)
 	hit_strength = move_toward(hit_strength, 0.0, delta * 9.0)
 	hit_material.set_shader_parameter("hit_amount", hit_strength)
 	if entrance_remaining > 0.0:
@@ -275,6 +282,9 @@ func _draw_charge() -> void:
 	var color := Color(1.0, 0.68, 0.32, 0.35 + amount * 0.55)
 	charge_visual.draw_arc(muzzle, lerpf(38.0, 14.0, amount), 0, TAU, 40, color, 2.0, true)
 	charge_visual.draw_circle(muzzle, 4.0 + amount * 6.0, color)
+	for wing in _charging_wing_muzzles():
+		charge_visual.draw_arc(wing, lerpf(23.0, 7.0, amount), 0, TAU, 24, color, 1.5, true)
+		charge_visual.draw_circle(wing, 2.0 + amount * 4.0, color)
 
 func _fire_pattern() -> void:
 	if enemy_type == "boss3":
@@ -400,6 +410,7 @@ func take_damage(amount: int) -> void:
 	health = maxi(health - amount, 0)
 	hit_strength = 0.65
 	if is_boss:
+		boss_damage_stage = _damage_stage()
 		GameState.boss_health_changed.emit(health, max_health)
 	if health <= 0:
 		is_dead = true
@@ -415,6 +426,11 @@ func return_to_pool() -> void:
 		pool.release(self)
 
 func on_pool_released() -> void:
+	boss_damage_stage = 0
+	boss_damage_blend = 0.0
+	damage_effect.reset()
+	charge_remaining = -1.0
+	charge_visual.queue_redraw()
 	set_deferred("monitoring", false)
 	set_deferred("monitorable", false)
 
@@ -456,3 +472,40 @@ func _configure_exhausts(configs: Array) -> void:
 		var config: Dictionary = configs[i]
 		exhaust.position = config["position"]
 		exhaust.configure(config["length"], config["width"], PI)
+
+# Shared with the attack thresholds; visual changes never alter combat stats.
+func _damage_stage() -> int:
+	if not is_boss:
+		return 0
+	return 2 if health < max_health * 0.25 else (1 if health < max_health * 0.55 else 0)
+
+func _charging_wing_muzzles() -> Array[Vector2]:
+	if enemy_type == "boss3" and health < max_health * 0.55 and volley_index % 2 == 0:
+		return [Vector2(-165, 95), Vector2(165, 95)]
+	return []
+
+func _configure_boss_appearance() -> void:
+	boss_damage_stage = 0
+	boss_damage_blend = 0.0
+	damage_effect.reset()
+	var sites := [Vector2(0.22, 0.12), Vector2(0.69, 0.31)]
+	if enemy_type == "boss2":
+		sites = [Vector2(0.32, 0.12), Vector2(0.66, 0.43)]
+	elif enemy_type == "boss3":
+		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37)]
+	var dimensions := sprite.texture.get_size() * sprite.scale
+	damage_effect.sites = [(sites[0] - Vector2(0.5, 0.5)) * dimensions, (sites[1] - Vector2(0.5, 0.5)) * dimensions]
+
+func _update_boss_appearance(delta: float) -> void:
+	if not is_boss:
+		return
+	boss_damage_stage = _damage_stage()
+	boss_damage_blend = move_toward(boss_damage_blend, float(boss_damage_stage), delta * 1.8)
+	# Remap health so 60% has the former 35% appearance, with room to worsen.
+	var ratio := pow(clampf(float(health) / max_health, 0.0, 1.0), 2.0551477366)
+	# Health controls density, size and opacity continuously; ease heavy hits in.
+	var smoke_target := smoothstep(0.0, 1.0, clampf((0.90 - ratio) / 0.85, 0.0, 1.0))
+	var fire_target := smoothstep(0.0, 1.0, clampf((0.50 - ratio) / 0.45, 0.0, 1.0))
+	damage_effect.smoke_strength = move_toward(damage_effect.smoke_strength, smoke_target, delta * 1.5)
+	damage_effect.fire_strength = move_toward(damage_effect.fire_strength, fire_target, delta * 1.2)
+	damage_effect.set_process(damage_effect.smoke_strength > 0.0 or not damage_effect.particles.is_empty())

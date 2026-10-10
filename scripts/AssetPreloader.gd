@@ -41,14 +41,17 @@ func load_all() -> void:
 		cropped.atlas = texture
 		cropped.region = bounds[kind]
 		cropped.filter_clip = true
+		_attach_building_wreck(cropped, BUILDINGS_DIR + "desert/" + kind + "_destroyed.png")
 		cropped.set_meta("health", 126 if kind == "bunker" else 90)
 		cropped.set_meta("score", 400 if kind == "bunker" else 350)
 		desert_buildings.append(cropped)
 	var hangar := _ground_texture("hangar", Rect2(58, 242, 1137, 721))
+	_attach_building_wreck(hangar, "res://assets/ground/hangar_destroyed.png")
 	hangar.set_meta("health", 144)
 	hangar.set_meta("score", 500)
 	desert_buildings.append(hangar)
 	var depot := _ground_texture("fuel_depot", Rect2(177, 146, 901, 935))
+	_attach_building_wreck(depot, "res://assets/ground/fuel_depot_destroyed.png")
 	depot.set_meta("health", 54)
 	depot.set_meta("score", 300)
 	desert_buildings.append(depot)
@@ -254,3 +257,13 @@ func _safe_load_tex(path: String) -> Texture2D:
 		return tex
 	push_warning("Failed to load texture at " + path)
 	return null
+
+func _attach_building_wreck(intact: AtlasTexture, path: String) -> void:
+	# Matching canvas and crop keep every ruin aligned with its original footprint.
+	var wreck := AtlasTexture.new()
+	wreck.atlas = load(path)
+	wreck.region = intact.region.grow(80.0).intersection(Rect2(Vector2.ZERO, wreck.atlas.get_size()))
+	wreck.set_meta("intact_size", intact.region.size)
+	wreck.set_meta("center_offset", wreck.region.get_center() - intact.region.get_center())
+	wreck.filter_clip = true
+	intact.set_meta("destroyed_texture", wreck)

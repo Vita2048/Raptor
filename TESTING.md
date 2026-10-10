@@ -137,3 +137,32 @@ both maps at three scroll positions with the boundary in the middle of the scree
 Inspect `artifacts/seams/sector-2-wrap-1.png` and `sector-3-wrap-1.png`.
 Raw joins and triple-stack previews are also in `artifacts/seams/`.
 The offline assembly asserts that rows 160 through height-161 are unchanged.
+
+
+## Boss damage appearance
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/boss_appearance_smoke.gd` with a rendering display. Verifies all three bosses, alternating final-boss wing charge cues, and smoke/fire reset on reuse as an interceptor. Smoke and fire use an accelerated continuous health curve: 60% health matches the previous 35% appearance, with smoothly increasing density, size and coverage; the original hull artwork remains unchanged. Saves `artifacts/review/boss-phases.png` for visual inspection. Combat values and projectile artwork are unchanged.
+
+
+## Debug destination menu
+
+Project Settings > Application > Run > Main Run Args is configured to `-- --debug-menu` (enable Advanced Settings if hidden). The first `--` separates Godot options from game arguments. Clear this field to disable the menu. F2 opens/closes it during play; Escape resumes. Select Level 1–3 or Boss Ship 1–3. Each selection starts a fresh run in that sector; bosses retain their normal warning and entrance. Restarts repeat the selected destination while this debug mode is enabled. Legacy `--debug-final-boss` still works when the menu is disabled.
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/debug_menu_smoke.gd -- --debug-menu` to verify all six destinations, checkpoints, pause/resume, boss effects, and the bunker's matching wreck and reuse. Screenshot: `artifacts/review/debug-menu.png`.
+
+
+## Crater and progressive damage refinement
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/damage_refinement_smoke.gd` to check the original crater behind the aligned bunker wreck, monotonic smoke/fire strength, and eased heavy-hit transitions. Saves `artifacts/review/crater-progressive-damage.png`. The bunker uses the existing crater and destroyed-building textures as two game layers; other building craters keep their original size.
+
+
+## Building wreck variants
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/building_wrecks_smoke.gd` with rendering enabled. Verifies every gameplay building has a matching transparent wreck, source canvas and footprint sizes agree, crater and wreck layers align, destruction awards score once, and reset restores the building. Extra crop padding preserves bent metal beyond the intact silhouette. Saves `artifacts/review/building-wrecks.png`.
+
+`damage_refinement_smoke.gd` also checks that both smoke and fire at 60% health match the prior 35% targets.
+
+
+## Sector crater tints
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/crater_tint_smoke.gd` to render the three crater palettes and verify persistent remains blend to the next sector over five seconds. Saves `artifacts/review/crater-sector-tints.png`. Level 1 retains the original sand tint; Level 2 uses desaturated concrete dust; Level 3 uses cooler slate rubble. Both vehicle and building remains use the shared shader, preserving texture detail and alpha.

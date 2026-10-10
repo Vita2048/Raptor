@@ -15,6 +15,7 @@ config/version="1.3"
 run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.7")
 config/icon="res://assets/ships/PlayerShip.png"
+run/main_run_args="-- --debug-menu"
 
 [autoload]
 
@@ -37,6 +38,7 @@ window/stretch/aspect="expand"
 movie_writer/video_quality=1.0
 movie_writer/movie_file="C:/Temp/Raptor/Recording.avi"
 movie_writer/fps=30
+run/main_run_args="-- --debug-menu"
 
 [input]
 

@@ -1,5 +1,12 @@
 extends RefCounted
 
+static var selected_level := 0
+static var selected_boss := false
+
+static func menu_requested() -> bool:
+	return OS.get_cmdline_user_args().has("--debug-menu")
+
+
 static func final_boss_requested() -> bool:
 	var query := ""
 	if OS.has_feature("web"):

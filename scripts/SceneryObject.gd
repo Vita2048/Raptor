@@ -127,7 +127,7 @@ func _create_remains() -> void:
 		return
 	remains = preload("res://scripts/GroundRemains.gd").new()
 	add_child(remains)
-	remains.configure(footprint)
+	remains.configure(footprint, sprite.texture.get_meta("destroyed_texture", null))
 
 func on_pool_acquired() -> void:
 	set_deferred("monitoring", true)
