@@ -21,7 +21,7 @@ var amplitude := 0.0
 var phase := 0.0
 var base_x := 0.0
 var fire_timer := 1.5
-var fire_interval := 1.6
+var fire_interval := 1.6 # Recovery after the volley; boss charge time is additional.
 var pool
 var sprite: Sprite2D
 var hit_material: ShaderMaterial
@@ -39,6 +39,8 @@ var charge_remaining := -1.0
 var charge_visual: Node2D
 const ENTRANCE_TIME := 2.4
 const CHARGE_TIME := 0.55
+var charge_duration := CHARGE_TIME
+var boss2_locked_aim := Vector2.DOWN
 var exhaust_plumes: Array[Node2D] = []
 
 func _ready() -> void:
@@ -74,6 +76,8 @@ func spawn(kind: String, start_position: Vector2) -> void:
 	enemy_type = kind
 	is_boss = kind in ["boss", "boss2", "boss3"]
 	volley_index = 0
+	charge_duration = CHARGE_TIME
+	boss2_locked_aim = Vector2.DOWN
 	is_dead = false
 	entrance_remaining = 0.0
 	charge_remaining = -1.0
@@ -258,13 +262,12 @@ func _physics_process(delta: float) -> void:
 		if charge_remaining <= 0.0:
 			charge_remaining = -1.0
 			_fire_pattern()
-			fire_timer = fire_interval
+			fire_timer = _boss_volley_recovery()
 		return
 	fire_timer -= delta
 	if fire_timer <= 0.0:
 		if is_boss:
-			charge_remaining = CHARGE_TIME
-			VFX.audio.play_sound("charge")
+			_begin_boss_charge()
 		else:
 			_fire_pattern()
 			fire_timer = fire_interval
@@ -277,16 +280,67 @@ func begin_entrance() -> void:
 func _draw_charge() -> void:
 	if not is_boss or charge_remaining < 0.0:
 		return
-	var amount := clampf(1.0 - charge_remaining / CHARGE_TIME, 0.0, 1.0)
+	var amount := clampf(1.0 - charge_remaining / charge_duration, 0.0, 1.0)
 	var muzzle := _muzzle_position()
 	var color := Color(1.0, 0.68, 0.32, 0.35 + amount * 0.55)
 	charge_visual.draw_arc(muzzle, lerpf(38.0, 14.0, amount), 0, TAU, 40, color, 2.0, true)
 	charge_visual.draw_circle(muzzle, 4.0 + amount * 6.0, color)
+	if enemy_type == "boss2" and volley_index % 2 == 1:
+		# Short directional cue shows the locked aim before the spread fires.
+		charge_visual.draw_line(muzzle + boss2_locked_aim * 12.0, muzzle + boss2_locked_aim * (45.0 + amount * 35.0), color, 2.0, true)
 	for wing in _charging_wing_muzzles():
 		charge_visual.draw_arc(wing, lerpf(23.0, 7.0, amount), 0, TAU, 24, color, 1.5, true)
 		charge_visual.draw_circle(wing, 2.0 + amount * 4.0, color)
 
+func _boss_charge_time() -> float:
+	if enemy_type == "boss":
+		return 0.42
+	if enemy_type == "boss2":
+		return 0.30 if health < max_health * 0.5 else 0.38
+	return CHARGE_TIME
+
+func _begin_boss_charge() -> void:
+	charge_duration = _boss_charge_time()
+	charge_remaining = charge_duration
+	if enemy_type == "boss2" and volley_index % 2 == 1:
+		var player: Node2D = get_parent().get("player")
+		var origin := global_position + _muzzle_position()
+		var aim := (player.global_position - origin).normalized() if is_instance_valid(player) else Vector2.DOWN
+		# Keep shots in the forward playfield, even when the player flies above us.
+		var angle := clampf(Vector2.DOWN.angle_to(aim), deg_to_rad(-65.0), deg_to_rad(65.0))
+		boss2_locked_aim = Vector2.DOWN.rotated(angle)
+	charge_visual.queue_redraw()
+	VFX.audio.play_sound("charge")
+
+func _boss_volley_recovery() -> float:
+	if enemy_type == "boss2" and volley_index > 0 and volley_index % 6 == 0:
+		return maxf(fire_interval, 0.65)
+	return fire_interval
+
+func _fire_boss2_pattern() -> void:
+	var origin := global_position + _muzzle_position()
+	var directions: Array = []
+	var furious := health < max_health * 0.5
+	var step := volley_index % 6
+	if step % 2 == 0:
+		# Shift a wide escape lane left, right, then center; no permanent camping spot.
+		var gap: float = [-32.0, 32.0, 0.0][step / 2]
+		for angle in [-64.0, -48.0, -32.0, -16.0, 0.0, 16.0, 32.0, 48.0, 64.0]:
+			if absf(angle - gap) > 16.0:
+				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
+	else:
+		# Snapshot at charge start; moving after the cue evades the aimed volley.
+		var angles: Array = [-20.0, -10.0, 0.0, 10.0, 20.0] if furious else [-12.0, 0.0, 12.0]
+		for angle in angles:
+			directions.append(boss2_locked_aim.rotated(deg_to_rad(angle)))
+	volley_index += 1
+	VFX.muzzle_flash(origin, Vector2.DOWN, false)
+	request_fire.emit(origin, directions, 590.0 if furious else 540.0, 22)
+
 func _fire_pattern() -> void:
+	if enemy_type == "boss2":
+		_fire_boss2_pattern()
+		return
 	if enemy_type == "boss3":
 		var origin := global_position + _muzzle_position()
 		var directions: Array = []
@@ -334,23 +388,12 @@ func _fire_pattern() -> void:
 		var origin: Vector2
 		var speed := 560.0
 		var dmg := 20
-		if enemy_type == "boss2":
-			# Level2 boss: denser pattern but with a clear central safe gap (~30 degrees)
-			# so the player has a place to dodge and hide between the volleys
-			for angle in [-82.0, -62.0, -42.0, -25.0, -15.0, 15.0, 25.0, 42.0, 62.0, 82.0]:
-				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
-			origin = global_position + Vector2(0, 160)
-			speed = 620.0
-			dmg = 22
-			VFX.muzzle_flash(origin, Vector2.DOWN, false)
-			request_fire.emit(origin, directions, speed, dmg)
-		else:
-			# Firing pattern leaves a clear 30-degree gap (-15 to 15) in the middle for the player to hide in!
-			for angle in [-75.0, -60.0, -45.0, -30.0, -15.0, 15.0, 30.0, 45.0, 60.0, 75.0]:
-				directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
-			origin = global_position + Vector2(0, 150)
-			VFX.muzzle_flash(origin, Vector2.DOWN, false)
-			request_fire.emit(origin, directions, speed, dmg)
+		# Boss 1 keeps its familiar central safe lane.
+		for angle in [-75.0, -60.0, -45.0, -30.0, -15.0, 15.0, 30.0, 45.0, 60.0, 75.0]:
+			directions.append(Vector2.DOWN.rotated(deg_to_rad(angle)))
+		origin = global_position + Vector2(0, 150)
+		VFX.muzzle_flash(origin, Vector2.DOWN, false)
+		request_fire.emit(origin, directions, speed, dmg)
 	elif enemy_type == "bomber":
 		var origin := global_position + Vector2(0, 64)
 		VFX.muzzle_flash(origin, Vector2.DOWN, false)

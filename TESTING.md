@@ -171,3 +171,12 @@ Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/crater_tint_smo
 ## Building destruction variety
 
 Each lethal building hit rolls once: 50% leaves its matching wreck and crater, 50% leaves only a crater with a 30% larger explosion. Vehicle destruction is unchanged. Run `Godot_v4.7-stable_win64_console.exe --headless --path . --script tests/destruction_variety_smoke.gd` to exercise both outcomes on all five buildings, verify explosion scaling, one-time score/roll, and reuse. Wreck-art preview tests seed their outcome to remain deterministic.
+
+
+## Boss 2 attack cycle and cadence
+
+Boss 2 alternates six-shot fans (escape lane left, right, then center) with locked-aim three-shot spreads. Below 50% health its aimed spread becomes five shots and charge drops from 0.38s to 0.30s. Every six volleys it rests for at least 0.65s. Aim is captured at charge start and indicated by a short muzzle line. Projectile damage remains 22; speeds are 540/590. Boss 1 charge is 0.42s; Boss 3 remains at 0.55s with unchanged attacks.
+
+`fire_interval` is the recovery AFTER firing, additional to charge time and frame scheduling. Keeping it at 0.01s does not produce 100 volleys per second. User-tuned HP remains 3800/5200 for Boss 1/2.
+
+Run `Godot_v4.7-stable_win64_console.exe --path . --script tests/boss2_pattern_smoke.gd` to verify escape lanes, locked aiming, both health phases, six-volley recovery, actual 60Hz cadence, unchanged HP/final-boss charge, and pool reset. Screenshot: `artifacts/review/boss2-shifting-fan.png`.
