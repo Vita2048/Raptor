@@ -5,7 +5,12 @@ Double-click `Open-Boss-Effects-Lab.cmd` in the project directory, or open
 F5 continues to run the normal game.
 
 - Select Boss 1, 2 or 3.
-- The lab uses the same particle fire and light as gameplay, including movement-driven flow.
+- **Experimental fire + smoke** (default) previews smaller cooling flames,
+  turbulent flow shared with smoke, and coordinated restrained lighting.
+  **Current game effects** keeps the production baseline for comparison.
+- **Small blasts below 25% armor** triggers occasional visual hull ruptures only
+  below that threshold. These are lab-only, capped at three concurrent effects,
+  and can be disabled independently of the flame comparison.
 - Drag **Damage** from 0% (intact) to 100% (fully damaged).
 - Use the armor presets to inspect the 70%, 50%, 30% and 15% health stages.
 - **Move ship** starts enabled to show fire attachment and smoke trails. Toggle
