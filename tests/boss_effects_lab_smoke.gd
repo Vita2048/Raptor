@@ -10,32 +10,36 @@ func _run() -> void:
 	current_scene = lab
 	var state = root.get_node("GameState")
 	var score: int = state.score
-	assert(lab.effect_picker.selected == 1)
-	assert(lab.boss.damage_effect.get_script() == load("res://scripts/LabRefinedDamage.gd"))
-	lab.effect_picker.select(0)
-	lab.effect_picker.item_selected.emit(0)
-	assert(lab.boss.damage_effect.get_script() == load("res://scripts/BossDamageEffect.gd"))
+	assert(lab.effect_picker.selected == 0)
+	assert(lab.boss.damage_effect.get_script() == load("res://scripts/BossRefinedDamage.gd"))
 	lab.effect_picker.select(1)
 	lab.effect_picker.item_selected.emit(1)
+	assert(lab.boss.damage_effect.get_script() == load("res://scripts/BossDamageEffect.gd"))
+	lab.effect_picker.select(0)
+	lab.effect_picker.item_selected.emit(0)
 	var rupture_start: int = lab.rupture_count
 	lab.damage_slider.value = 75
-	lab._update_ruptures(2.0)
+	lab.boss.damage_effect._update_ruptures(2.0)
+	lab._update_ruptures(0.0)
 	assert(lab.rupture_count == rupture_start, "No ruptures at exactly 25% armor")
 	lab.damage_slider.value = 76
-	lab._update_ruptures(2.0)
+	lab.boss.damage_effect._update_ruptures(2.0)
+	lab._update_ruptures(0.0)
 	assert(lab.rupture_count == rupture_start + 1, "Ruptures start below 25% armor")
 	for i in range(8):
-		lab._update_ruptures(2.0)
+		lab.boss.damage_effect._update_ruptures(2.0)
+	lab._update_ruptures(0.0)
 	assert(lab.rupture_count == rupture_start + 3, "Concurrent hull blasts must remain bounded")
 	lab.rupture_toggle.button_pressed = false
-	lab._update_ruptures(2.0)
+	lab.boss.damage_effect._update_ruptures(2.0)
+	lab._update_ruptures(0.0)
 	assert(lab.rupture_count == rupture_start + 3)
 	lab.rupture_toggle.button_pressed = true
 	lab._spawn_boss()
-	# Normal game ships do not opt into this experiment.
+	# Game and lab use the same approved renderer.
 	var gameplay_ship = load("res://scripts/EnemyShip.gd").new()
 	root.add_child(gameplay_ship)
-	assert(gameplay_ship.damage_effect.get_script() == load("res://scripts/BossDamageEffect.gd"))
+	assert(gameplay_ship.damage_effect.get_script() == load("res://scripts/BossRefinedDamage.gd"))
 	gameplay_ship.free()
 	assert(lab.move_toggle.button_pressed, "Movement should be visible immediately")
 	lab.move_toggle.button_pressed = false

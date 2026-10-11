@@ -1,5 +1,5 @@
 extends "res://scripts/BossParticleFlames.gd"
-## Experimental renderer used only by BossEffectsLab.
+## Layered boss fire: attached cores, trailing tongues, fuel surges and hull light.
 
 var turbulence := FastNoiseLite.new()
 var core_emitters: Array[CPUParticles2D] = []
@@ -48,6 +48,9 @@ func _sync_emitters() -> void:
 			tongue.amount = 12
 			tongue.lifetime = 0.58
 			tongue.preprocess = 0.58
+			# Only the short-lived tips detach; the body and core stay seated
+			# on the hull. Already emitted tips can lag naturally through turns.
+			tongue.local_coords = false
 			tongue.spread = 12.0
 			tongue.emission_rect_extents = Vector2(3, 2)
 			tongue.scale_amount_min = 0.19
@@ -129,12 +132,17 @@ func _process(delta: float) -> void:
 			tongue.position = flame.position + Vector2(sign_x * 4.0, -2)
 			tongue.direction = flame.direction.rotated(sign_x * 0.18 + curl * 0.45)
 			tongue.gravity = flame.gravity + Vector2(curl * 75.0, -12)
-			tongue.initial_velocity_min = 58.0 * tongue_heat
-			tongue.initial_velocity_max = 95.0 * tongue_heat
+			var inherited: Vector2 = host.hull_velocity.rotated(-global_rotation) * 0.70
+			var travel := tongue.direction * 76.0 * tongue_heat + inherited
+			tongue.direction = travel.normalized()
+			tongue.initial_velocity_min = travel.length() * 0.80
+			tongue.initial_velocity_max = travel.length() * 1.20
 			tongue.emitting = flame.emitting
 			tongue.modulate.a = clampf(strength * (0.8 + curl * 0.3), 0.0, 1.0)
 		glow_lights[i].position = host.sites[i]
-		glow_lights[i].texture_scale = 2.1
-		glow_lights[i].energy = strength * intensity * 1.1
+		var flicker := turbulence.get_noise_2d(time * 9.0, float(i) * 29.0 + 320.0)
+		glow_lights[i].texture_scale = 1.45 + intensity * 0.18
+		glow_lights[i].energy = strength * intensity * (1.25 + flicker * 0.16)
+		glow_lights[i].color = Color(1.0, 0.46, 0.13).lerp(Color(1.0, 0.66, 0.27), clampf((intensity - 0.9) * 1.6, 0.0, 1.0))
 		ember_emitters[i].position = flame.position
 		ember_emitters[i].direction = flame.direction

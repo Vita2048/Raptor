@@ -38,7 +38,11 @@ func _run() -> void:
 				var emitter = layer.flame_emitters[index]
 				assert(emitter.rotation == 0.0)
 				assert(emitter.local_coords)
-				assert(emitter.position == boss.damage_effect.sites[index] + Vector2(0, -26))
+				assert(emitter.position == boss.damage_effect.sites[index] + Vector2(0, -16))
+				assert(layer.core_emitters[index].local_coords)
+				assert(layer.core_emitters[index].position == boss.damage_effect.sites[index] + Vector2(0, -9))
+				assert(not layer.tongue_emitters[index * 2].local_coords)
+				assert(not layer.tongue_emitters[index * 2 + 1].local_coords)
 			for particle in boss.damage_effect.particles:
 				assert(not particle.has("fire"), "Whole flames must never enter the drifting particle system")
 			assert(absf(boss.damage_effect.flame_lean) <= 1.05)
@@ -53,9 +57,22 @@ func _run() -> void:
 		for index in range(3):
 			boss.damage_effect.damage_amount = 0.25 + index * 0.20
 			assert(is_equal_approx(boss.damage_effect.source_strength(index), 0.5))
+		# Gameplay hull ruptures start strictly below the armor threshold.
+		boss.damage_effect.reset()
+		boss.health = roundi(boss.max_health * 0.25)
+		boss.damage_effect._update_ruptures(2.0)
+		assert(boss.damage_effect.rupture_count == 0)
+		boss.health -= 1
+		boss.damage_effect._update_ruptures(2.0)
+		assert(boss.damage_effect.rupture_count == 1)
+		boss.is_dead = true
+		boss.damage_effect._update_ruptures(2.0)
+		assert(boss.damage_effect.rupture_count == 1, "Dead bosses must not emit hull blasts")
 		boss.on_pool_released()
 		assert(not is_instance_valid(boss.damage_effect.realistic_layer))
 		assert(boss.damage_effect.particles.is_empty() and boss.damage_effect.damage_amount == 0)
+		assert(boss.damage_effect.hull_velocity == Vector2.ZERO)
+		assert(boss.damage_effect.get_child_count() == 0, "Pooled bosses must not retain hull blasts")
 		boss.queue_free()
 	print("BOSS_DAMAGE_PROGRESSION_OK: all bosses, 70/50/30/15%, 1/2/3/3 flames, increasing intensity, smooth source fades, bounded sustained emission, pool reset")
 	quit()

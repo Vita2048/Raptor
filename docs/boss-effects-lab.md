@@ -5,13 +5,15 @@ Double-click `Open-Boss-Effects-Lab.cmd` in the project directory, or open
 F5 continues to run the normal game.
 
 - Select Boss 1, 2 or 3.
-- **Experimental fire + smoke** (default) previews bright compact cores,
+- **Current game effects** (default) previews bright compact cores,
   independently curling orange tongues, and irregular fuel surges at each breach.
-  Smoke shares the turbulent flame flow, and hull lighting follows the surges.
-  **Current game effects** keeps the production baseline for comparison.
+  Short-lived upper tongues trail through turns while the cores stay attached.
+  Warm soot at the flame tips cools into expanding dark smoke, then fades.
+  Tighter amber hull lighting changes brightness and warmth with each surge.
+  **Previous fire + smoke** keeps the earlier appearance for comparison.
 - **Small blasts below 25% armor** triggers occasional visual hull ruptures only
-  below that threshold. These are lab-only, capped at three concurrent effects,
-  and can be disabled independently of the flame comparison.
+  below that threshold. The game uses the same effects, capped at three concurrent
+  blasts per boss. The lab toggle can disable them in the current effects preview.
 - Drag **Damage** from 0% (intact) to 100% (fully damaged).
 - Use the armor presets to inspect the 70%, 50%, 30% and 15% health stages.
 - **Move ship** starts enabled to show fire attachment and smoke trails. Toggle
@@ -22,7 +24,7 @@ F5 continues to run the normal game.
   automatically returns after the effects finish; repeat as needed.
 - **Restore ship** clears the smoke and restarts the selected damage preview.
 
-The lab uses the production EnemyShip, BossDamageEffect and VFX scripts and the
+The lab uses the production EnemyShip, BossRefinedDamage and VFX scripts and the
 same explosion scale as EnemyManager. It does not fire weapons, award score or
 advance the campaign. Changing the slider to 100% previews full damage without
 automatically destroying the ship; the explosion button controls destruction.

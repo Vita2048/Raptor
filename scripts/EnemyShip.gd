@@ -55,7 +55,7 @@ func _ready() -> void:
 	charge_visual.z_index = 5
 	charge_visual.draw.connect(_draw_charge)
 	add_child(charge_visual)
-	damage_effect = preload("res://scripts/BossDamageEffect.gd").new()
+	damage_effect = preload("res://scripts/BossRefinedDamage.gd").new()
 	add_child(damage_effect)
 	var shadow := preload("res://scripts/AircraftShadow.gd").new()
 	shadow.source = sprite

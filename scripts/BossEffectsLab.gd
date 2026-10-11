@@ -7,9 +7,7 @@ var damage_slider: HSlider
 var boss_picker: OptionButton
 var effect_picker: OptionButton
 var rupture_toggle: CheckButton
-var rupture_delay := 0.8
 var rupture_count := 0
-var hull_image: Image
 var move_toggle: CheckButton
 var movement_speed: HSlider
 var damage_label: Label
@@ -64,8 +62,8 @@ func _build_ui() -> void:
 	boss_picker.item_selected.connect(func(_index: int): _spawn_boss())
 	effect_picker = OptionButton.new()
 	effect_picker.add_item("Current game effects")
-	effect_picker.add_item("Experimental fire + smoke")
-	effect_picker.select(1)
+	effect_picker.add_item("Previous fire + smoke")
+	effect_picker.select(0)
 	effect_picker.custom_minimum_size.y = 48
 	effect_picker.add_theme_font_size_override("font_size", 20)
 	box.add_child(effect_picker)
@@ -113,6 +111,9 @@ func _build_ui() -> void:
 	rupture_toggle.button_pressed = true
 	rupture_toggle.add_theme_font_size_override("font_size", 20)
 	box.add_child(rupture_toggle)
+	rupture_toggle.toggled.connect(func(value: bool):
+		if is_instance_valid(boss) and boss.damage_effect.get_script() == preload("res://scripts/BossRefinedDamage.gd"):
+			boss.damage_effect.ruptures_enabled = value)
 	explode_button = Button.new()
 	explode_button.text = "TEST FINAL EXPLOSION"
 	explode_button.custom_minimum_size.y = 64
@@ -150,14 +151,15 @@ func _spawn_boss() -> void:
 	boss.spawn(KINDS[boss_picker.selected], Vector2(700, 555))
 	if effect_picker.selected == 1:
 		var original: Node2D = boss.damage_effect
-		var refined := preload("res://scripts/LabRefinedDamage.gd").new()
+		var refined := preload("res://scripts/BossDamageEffect.gd").new()
 		refined.sites = original.sites.duplicate()
 		boss.remove_child(original)
 		original.free()
 		boss.damage_effect = refined
 		boss.add_child(refined)
-	hull_image = boss.sprite.texture.get_image()
-	rupture_delay = randf_range(0.65, 1.2)
+	if effect_picker.selected == 0:
+		boss.damage_effect.ruptures_enabled = rupture_toggle.button_pressed
+	rupture_count = 0
 	boss.set_physics_process(false)
 	boss.set_deferred("monitoring", false)
 	boss.set_deferred("monitorable", false)
@@ -187,33 +189,11 @@ func _process(delta: float) -> void:
 		status_label.text += " · hull ruptures"
 
 func _update_ruptures(delta: float) -> void:
-	if not rupture_toggle.button_pressed or boss.health >= boss.max_health * 0.25:
-		rupture_delay = 0.65
-		return
-	rupture_delay -= delta
-	if rupture_delay > 0.0:
-		return
-	rupture_delay = randf_range(0.65, 1.4)
-	var existing := 0
-	for child in boss.get_children():
-		if child.has_meta("lab_rupture"):
-			existing += 1
-	if existing >= 3:
-		return
-	# Select an opaque hull pixel so blasts never originate in wing gaps.
-	for attempt in range(40):
-		var pixel := Vector2i(randi_range(0, hull_image.get_width() - 1), randi_range(0, hull_image.get_height() - 1))
-		if hull_image.get_pixelv(pixel).a < 0.75:
-			continue
-		var local_point: Vector2 = (Vector2(pixel) - boss.sprite.texture.get_size() * 0.5) * boss.sprite.scale + boss.sprite.position
-		var burst = preload("res://scenes/ExplosionEffect.tscn").instantiate()
-		burst.set_meta("lab_rupture", true)
-		burst.position = local_point
-		burst.configure(false, randf_range(0.24, 0.38))
-		boss.add_child(burst)
-		burst.burst(true)
-		rupture_count += 1
-		break
+	# The damage renderer owns spawning in both the game and the lab.
+	# Observe it here rather than advancing its timer a second time.
+	if effect_picker.selected == 0:
+		boss.damage_effect.ruptures_enabled = rupture_toggle.button_pressed
+		rupture_count = boss.damage_effect.rupture_count
 
 func test_explosion() -> void:
 	if exploding or not is_instance_valid(boss):
