@@ -128,8 +128,8 @@ func load_all() -> void:
 		ship.filter_clip = true
 		ship_textures[kind] = ship
 	bomb_texture = _safe_load_tex(ITEMS_DIR + "Bomb.png")
-	black_smoke_textures = _load_zero_series(PARTICLES_DIR, "blackSmoke", 0, 24)
-	explosion_textures = _load_zero_series(PARTICLES_DIR, "explosion", 0, 8)
+	black_smoke_textures = _load_particle_atlas("smoke-atlas.png")
+	explosion_textures = _load_particle_atlas("explosion-atlas.png")
 	flash_textures = _load_zero_series(PARTICLES_DIR, "flash", 0, 8)
 	white_puff_textures = _load_zero_series(PARTICLES_DIR, "whitePuff", 0, 24)
 
@@ -185,8 +185,21 @@ func random_particle(kind: String) -> Texture2D:
 		"white_puff":
 			return white_puff_textures.pick_random()
 		"black_smoke":
-			return black_smoke_textures.pick_random()
+			# Fully developed puffs for static particle emitters; avoid ignition/dissipation.
+			return black_smoke_textures[randi_range(4, 9)]
 	return explosion_textures.pick_random()
+
+func _load_particle_atlas(filename: String) -> Array[Texture2D]:
+	var atlas: Texture2D = load(PARTICLES_DIR + filename)
+	var cell := atlas.get_size() / 4.0
+	var frames: Array[Texture2D] = []
+	for i in range(16):
+		var frame := AtlasTexture.new()
+		frame.atlas = atlas
+		frame.region = Rect2(Vector2(i % 4, i / 4) * cell, cell)
+		frame.filter_clip = true
+		frames.append(frame)
+	return frames
 
 func _load_named_series(dir_path: String, prefix: String, first: int, last: int) -> Array[Texture2D]:
 	var textures: Array[Texture2D] = []

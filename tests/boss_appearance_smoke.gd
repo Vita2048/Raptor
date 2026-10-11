@@ -40,10 +40,10 @@ func _run() -> void:
 			assert(boss.damage_effect.sites.size() == 3)
 			boss.damage_effect._process(0.1)
 			var flame_sources := {}
-			for particle in boss.damage_effect.particles:
-				if particle.fire:
-					flame_sources[particle.source] = true
-			assert(flame_sources.size() == [0, 2, 3][column], "Damage must spread across the original flame particles")
+			for index in range(3):
+				if boss.damage_effect.source_strength(index) * boss.damage_effect.fire_strength > 0.001:
+					flame_sources[index] = true
+			assert(flame_sources.size() == [0, 2, 3][column], "Damage must spread across anchored hull flames")
 			if row == 2:
 				boss.volley_index = 0
 				assert(boss._charging_wing_muzzles().size() == (0 if column == 0 else 2))

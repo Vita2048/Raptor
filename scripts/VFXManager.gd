@@ -26,6 +26,10 @@ func warm_up() -> void:
 	if _warmed:
 		return
 	_warmed = true
+	var boss_fire := preload("res://scripts/BossParticleFlames.gd")
+	boss_fire.flame_texture()
+	boss_fire.spark_texture()
+	boss_fire.glow_texture()
 	var anchor := Vector2(960, 700)
 	var muzzle := muzzle_pool.acquire()
 	muzzle.play_at(anchor, 0.0, Color(4.0, 1.8, 0.65, 1.0))
@@ -57,18 +61,16 @@ func impact_spark(pos: Vector2, velocity: Vector2, player_owned: bool, quiet := 
 	spark.play_at(pos, velocity, tint)
 
 func boss_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void:
-	_spawn_large_explosion(pos, scale_multiplier)
+	# Restore the wide, overlapping boss detonation and its expanding screen flash.
+	_spawn_large_explosion(pos, scale_multiplier * 2.2)
 	_play_boss_screen_blast(pos, scale_multiplier)
 	var offsets := [
-		Vector2(-210, -250),
-		Vector2(225, -210),
-		Vector2(-320, -25),
-		Vector2(320, 20),
-		Vector2(-175, 245),
-		Vector2(185, 275)
+		Vector2(-210, -250), Vector2(225, -210),
+		Vector2(-320, -25), Vector2(320, 20),
+		Vector2(-175, 245), Vector2(185, 275)
 	]
 	for i in range(offsets.size()):
-		_spawn_large_explosion_delayed(pos + offsets[i] * scale_multiplier, 0.035 + i * 0.04, scale_multiplier)
+		_spawn_rupture_delayed(pos + offsets[i] * scale_multiplier, 0.035 + float(i) * 0.04, scale_multiplier)
 
 func _create_muzzle_flash() -> Sprite2D:
 	var flash := MuzzleFlashScript.new()
@@ -88,24 +90,25 @@ func _spawn_large_explosion(pos: Vector2, scale_multiplier: float = 1.0) -> void
 	add_child(explosion)
 	explosion.burst()
 
-func _spawn_large_explosion_delayed(pos: Vector2, delay: float, scale_multiplier: float = 1.0) -> void:
+func _spawn_rupture_delayed(pos: Vector2, delay: float, scale_multiplier: float) -> void:
 	await get_tree().create_timer(delay).timeout
-	_spawn_large_explosion(pos, scale_multiplier)
+	var explosion := ExplosionScene.instantiate()
+	explosion.top_level = true
+	explosion.global_position = pos
+	explosion.configure(true, scale_multiplier * 1.4)
+	add_child(explosion)
+	explosion.burst()
 
-func _play_boss_screen_blast(pos: Vector2, scale_multiplier: float = 1.0) -> void:
+func _play_boss_screen_blast(pos: Vector2, scale_multiplier: float) -> void:
 	var flash := Sprite2D.new()
 	flash.name = "BossScreenBlast"
-	flash.texture = AssetDB.flash_textures.pick_random()
-	flash.top_level = true
+	flash.texture = AssetDB.flash_textures[0]
 	flash.global_position = pos
-	flash.centered = true
 	flash.z_index = 260
 	flash.modulate = Color(5.0, 2.4, 0.9, 1.0)
 	flash.scale = Vector2.ONE * 0.42 * scale_multiplier
 	add_child(flash)
-	var tween := flash.create_tween()
-	tween.set_parallel(true)
+	var tween := flash.create_tween().set_parallel(true)
 	tween.tween_property(flash, "scale", Vector2.ONE * 3.5 * scale_multiplier, 0.42).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
 	tween.tween_property(flash, "modulate:a", 0.0, 0.42)
-	await tween.finished
-	flash.queue_free()
+	tween.chain().tween_callback(flash.queue_free)

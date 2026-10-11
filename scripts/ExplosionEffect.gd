@@ -4,11 +4,13 @@ const MAP_SCROLL_SPEED := 235.0
 
 var flash_sprite: Sprite2D
 var fireball_sprite: Sprite2D
+var fireball_next: Sprite2D
 var boss_flash_sprite: Sprite2D
 var shockwave_layer: Node2D
 var smoke_layer: Node2D
 var large_scale := false
 var size_multiplier := 1.0
+var fireball_age := -1.0
 
 func _ready() -> void:
 	z_index = 90
@@ -29,7 +31,7 @@ func burst(quiet := false) -> void:
 	_play_fireball()
 	_emit_shockwave()
 	_emit_smoke_delayed()
-	await get_tree().create_timer(2.05 if large_scale else 1.75).timeout
+	await get_tree().create_timer(2.65 if large_scale else 2.0).timeout
 	queue_free()
 
 func _build_layers() -> void:
@@ -46,6 +48,11 @@ func _build_layers() -> void:
 	fireball_sprite.visible = false
 	fireball_sprite.z_index = 3
 	add_child(fireball_sprite)
+	fireball_next = Sprite2D.new()
+	fireball_next.name = "CoreFireballBlend"
+	fireball_next.visible = false
+	fireball_next.z_index = 3
+	add_child(fireball_next)
 
 	boss_flash_sprite = Sprite2D.new()
 	boss_flash_sprite.name = "BossFlash"
@@ -81,28 +88,49 @@ func _play_flash() -> void:
 func _play_boss_flash() -> void:
 	boss_flash_sprite.visible = true
 	boss_flash_sprite.texture = AssetDB.flash_textures.pick_random()
-	boss_flash_sprite.modulate = Color(1.0, 0.88, 0.45, 0.95)
-	boss_flash_sprite.scale = Vector2.ONE * 0.6 * size_multiplier
+	boss_flash_sprite.modulate = Color(1.0, 0.88, 0.65, 0.55)
+	boss_flash_sprite.scale = Vector2.ONE * 0.24 * size_multiplier
 	var tween := create_tween()
 	tween.set_parallel(true)
-	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 1.18 * size_multiplier, 0.34).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
-	tween.tween_property(boss_flash_sprite, "modulate:a", 0.0, 0.34).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(boss_flash_sprite, "scale", Vector2.ONE * 0.7 * size_multiplier, 0.20).set_trans(Tween.TRANS_QUART).set_ease(Tween.EASE_OUT)
+	tween.tween_property(boss_flash_sprite, "modulate:a", 0.0, 0.20)
 	await tween.finished
 	boss_flash_sprite.visible = false
 
 func _play_fireball() -> void:
+	fireball_age = 0.0
 	fireball_sprite.visible = true
-	fireball_sprite.modulate = Color(1.0, 0.78, 0.48, 1.0)
+	fireball_next.visible = true
+	_update_fireball()
+
+func _process(delta: float) -> void:
+	if fireball_age >= 0.0:
+		fireball_age += delta
+		_update_fireball()
+
+func _update_fireball() -> void:
+	var duration := 1.35 if large_scale else 1.05
+	var t := clampf(fireball_age / duration, 0.0, 1.0)
+	if t >= 1.0:
+		fireball_sprite.visible = false
+		fireball_next.visible = false
+		fireball_age = -1.0
+		return
 	var base := (0.168 if large_scale else 0.13) * size_multiplier
 	var frames := AssetDB.explosion_textures
-	var frame_time := 1.0 / 20.0
-	for i in range(frames.size()):
-		var t: float = float(i) / max(float(frames.size() - 1), 1.0)
-		fireball_sprite.texture = frames[i]
-		fireball_sprite.scale = Vector2.ONE * lerp(base, base * 1.85, t)
-		fireball_sprite.modulate.a = 1.0 - smoothstep(0.38, 1.0, t)
-		await get_tree().create_timer(frame_time).timeout
-	fireball_sprite.visible = false
+	# Preserve the old on-screen size with the new atlas cell resolution.
+	base *= 600.0 / frames[0].get_width()
+	# Rapid ignition, then spend most of the lifetime on expansion and cooling.
+	var phase := pow(t, 0.72) * float(frames.size() - 1)
+	var frame := int(phase)
+	var blend := smoothstep(0.0, 1.0, phase - frame)
+	var opacity := 1.0 - smoothstep(0.65, 1.0, t)
+	fireball_sprite.texture = frames[frame]
+	fireball_next.texture = frames[mini(frame + 1, frames.size() - 1)]
+	fireball_sprite.scale = Vector2.ONE * base * lerpf(0.85, 1.85, 1.0 - pow(1.0 - t, 2.5))
+	fireball_next.scale = fireball_sprite.scale
+	fireball_sprite.modulate = Color(1, 1, 1, opacity * (1.0 - blend))
+	fireball_next.modulate = Color(1, 1, 1, opacity * blend)
 
 func _emit_shockwave() -> void:
 	var count := randi_range(12, 18) if large_scale else randi_range(10, 15)
@@ -113,11 +141,11 @@ func _emit_shockwave() -> void:
 		count,
 		0.4,
 		Vector2(cos(angle), sin(angle)),
-		(randf_range(760.0, 1180.0) if large_scale else randf_range(650.0, 980.0)) * size_multiplier,
+		(randf_range(380.0, 560.0) if large_scale else randf_range(320.0, 480.0)) * size_multiplier,
 		420.0,
 		0.045,
-		0.115,
-		Color(1.0, 0.96, 0.82, 0.9),
+		0.065,
+		Color(1.0, 0.86, 0.65, 0.5),
 		Color(1.0, 1.0, 1.0, 0.0)
 	)
 	shockwave_layer.add_child(emitter)
@@ -131,15 +159,15 @@ func _emit_smoke_delayed() -> void:
 		"BlackSmokeTrail",
 		AssetDB.random_particle("black_smoke"),
 		count,
-		randf_range(1.0, 1.5),
+		(2.2 if large_scale else 1.6),
 		drift,
-		(randf_range(145.0, 240.0) if large_scale else randf_range(105.0, 180.0)) * size_multiplier,
+		(randf_range(45.0, 75.0) if large_scale else randf_range(35.0, 60.0)) * size_multiplier,
 		28.0,
 		0.055,
 		0.16,
-		Color(0.12, 0.12, 0.12, 0.72),
-		Color(0.05, 0.05, 0.05, 0.0),
-		(Vector2(randf_range(-210.0, 210.0), randf_range(-190.0, 190.0)) * size_multiplier) if large_scale else Vector2(randf_range(-34.0, 34.0), randf_range(-18.0, 24.0))
+		Color(0.65, 0.65, 0.67, 0.72),
+		Color(0.40, 0.40, 0.42, 0.0),
+		Vector2.ZERO
 	)
 	smoke_layer.add_child(emitter)
 	emitter.restart()
@@ -166,14 +194,17 @@ func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int,
 	material.initial_velocity_max = speed
 	material.damping_min = damping
 	material.damping_max = damping * 1.25
-	material.angular_velocity_min = -260.0
-	material.angular_velocity_max = 260.0
+	material.angular_velocity_min = -18.0 if layer_name == "BlackSmokeTrail" else -180.0
+	material.angular_velocity_max = 18.0 if layer_name == "BlackSmokeTrail" else 180.0
 	material.scale_amount_min = scale_min * (1.08 if large_scale else 1.0) * size_multiplier
 	material.scale_amount_max = scale_max * (1.08 if large_scale else 1.0) * size_multiplier
 	if layer_name == "BlackSmokeTrail":
+		# New smoke cells are smaller than the former ~373px textures.
+		material.scale_amount_min *= 373.0 / texture.get_width()
+		material.scale_amount_max *= 373.0 / texture.get_width()
 		material.gravity = Vector2(0.0, MAP_SCROLL_SPEED * 0.34)
 		material.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
-		material.emission_rect_extents = Vector2(130, 100) * size_multiplier if large_scale else Vector2(34, 24) * size_multiplier
+		material.emission_rect_extents = Vector2(32, 24) * size_multiplier if large_scale else Vector2(18, 14) * size_multiplier
 	else:
 		material.gravity = Vector2.ZERO
 

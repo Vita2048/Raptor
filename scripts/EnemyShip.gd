@@ -531,7 +531,7 @@ func _configure_boss_appearance() -> void:
 	if enemy_type == "boss2":
 		sites = [Vector2(0.36, 0.15), Vector2(0.69, 0.49), Vector2(0.28, 0.60)]
 	elif enemy_type == "boss3":
-		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37), Vector2(0.28, 0.53)]
+		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37), Vector2(0.14, 0.39)]
 	var dimensions := sprite.texture.get_size() * sprite.scale
 	damage_effect.sites.clear()
 	for site in sites:
