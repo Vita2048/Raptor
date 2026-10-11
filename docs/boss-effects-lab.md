@@ -5,8 +5,9 @@ Double-click `Open-Boss-Effects-Lab.cmd` in the project directory, or open
 F5 continues to run the normal game.
 
 - Select Boss 1, 2 or 3.
-- **Experimental fire + smoke** (default) previews smaller cooling flames,
-  turbulent flow shared with smoke, and coordinated restrained lighting.
+- **Experimental fire + smoke** (default) previews bright compact cores,
+  independently curling orange tongues, and irregular fuel surges at each breach.
+  Smoke shares the turbulent flame flow, and hull lighting follows the surges.
   **Current game effects** keeps the production baseline for comparison.
 - **Small blasts below 25% armor** triggers occasional visual hull ruptures only
   below that threshold. These are lab-only, capped at three concurrent effects,

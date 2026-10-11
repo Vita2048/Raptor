@@ -2,6 +2,8 @@ extends "res://scripts/BossParticleFlames.gd"
 ## Experimental renderer used only by BossEffectsLab.
 
 var turbulence := FastNoiseLite.new()
+var core_emitters: Array[CPUParticles2D] = []
+var tongue_emitters: Array[CPUParticles2D] = []
 
 func _ready() -> void:
 	super._ready()
@@ -9,7 +11,56 @@ func _ready() -> void:
 	turbulence.frequency = 1.0
 
 func heat(index: int) -> float:
-	return 0.88 + 0.22 * turbulence.get_noise_2d(time * 2.8, float(index) * 13.0)
+	# Smooth, non-periodic fuel surges; each breach has its own noise slice.
+	var fuel := turbulence.get_noise_2d(time * 0.85, float(index) * 31.0 + 137.0)
+	var surge := smoothstep(-0.1, 0.5, fuel)
+	return 0.96 + 0.12 * turbulence.get_noise_2d(time * 2.8, float(index) * 13.0) + surge * 0.45
+
+func set_active(value: bool) -> void:
+	super.set_active(value)
+	for emitter in core_emitters + tongue_emitters:
+		emitter.emitting = value
+		if not value:
+			emitter.modulate.a = 0.0
+
+func _sync_emitters() -> void:
+	super._sync_emitters()
+	while core_emitters.size() < flame_emitters.size():
+		var core := _make_flame_emitter()
+		core.amount = 18
+		core.lifetime = 0.25
+		core.preprocess = 0.25
+		core.emission_rect_extents = Vector2(5, 2)
+		core.spread = 14.0
+		core.scale_amount_min = 0.20
+		core.scale_amount_max = 0.32
+		core.z_index = 1
+		var ramp := Gradient.new()
+		ramp.set_color(0, Color(1.25, 1.12, 0.8, 0.9))
+		ramp.add_point(0.4, Color(1.15, 0.9, 0.45, 0.8))
+		ramp.set_color(1, Color(1, 0.5, 0.15, 0))
+		core.color_ramp = ramp
+		add_child(core)
+		core_emitters.append(core)
+		# Two independent streams split off from the same anchored breach.
+		for side in range(2):
+			var tongue := _make_flame_emitter()
+			tongue.amount = 12
+			tongue.lifetime = 0.58
+			tongue.preprocess = 0.58
+			tongue.spread = 12.0
+			tongue.emission_rect_extents = Vector2(3, 2)
+			tongue.scale_amount_min = 0.19
+			tongue.scale_amount_max = 0.34
+			tongue.damping_min = 6.0
+			tongue.damping_max = 16.0
+			var outer_ramp := Gradient.new()
+			outer_ramp.set_color(0, Color(1, 0.7, 0.32, 0.6))
+			outer_ramp.add_point(0.35, Color(1, 0.5, 0.16, 0.75))
+			outer_ramp.set_color(1, Color(0.65, 0.19, 0.04, 0))
+			tongue.color_ramp = outer_ramp
+			add_child(tongue)
+			tongue_emitters.append(tongue)
 
 func flow(index: int) -> Vector2:
 	var lean: float = host.flame_lean
@@ -58,6 +109,30 @@ func _process(delta: float) -> void:
 		flame.modulate.a = clampf(strength * intensity * 1.2, 0.0, 1.0)
 		flame.initial_velocity_min = 42.0 * intensity
 		flame.initial_velocity_max = 78.0 * intensity
+		# Scale newborn particles, not the emitter: existing fire never snaps
+		# larger or rotates when a new surge begins.
+		flame.scale_amount_min = 0.34 * lerpf(1.0, intensity, 0.5)
+		flame.scale_amount_max = 0.60 * lerpf(1.0, intensity, 0.5)
+		var core := core_emitters[i]
+		core.position = host.sites[i] + Vector2(0, -9)
+		core.direction = flame.direction
+		core.gravity = flame.gravity * 0.5
+		core.initial_velocity_min = 16.0 * intensity
+		core.initial_velocity_max = 32.0 * intensity
+		core.emitting = flame.emitting
+		core.modulate.a = clampf(strength * intensity, 0.0, 1.0)
+		for side in range(2):
+			var tongue := tongue_emitters[i * 2 + side]
+			var sign_x := float(side * 2 - 1)
+			var curl := turbulence.get_noise_2d(time * 3.1, float(i * 2 + side) * 23.0 + 210.0)
+			var tongue_heat := intensity * (0.95 + curl * 0.35)
+			tongue.position = flame.position + Vector2(sign_x * 4.0, -2)
+			tongue.direction = flame.direction.rotated(sign_x * 0.18 + curl * 0.45)
+			tongue.gravity = flame.gravity + Vector2(curl * 75.0, -12)
+			tongue.initial_velocity_min = 58.0 * tongue_heat
+			tongue.initial_velocity_max = 95.0 * tongue_heat
+			tongue.emitting = flame.emitting
+			tongue.modulate.a = clampf(strength * (0.8 + curl * 0.3), 0.0, 1.0)
 		glow_lights[i].position = host.sites[i]
 		glow_lights[i].texture_scale = 2.1
 		glow_lights[i].energy = strength * intensity * 1.1
