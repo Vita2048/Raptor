@@ -37,6 +37,13 @@ func _run() -> void:
 			boss.health = int(boss.max_health * [1.0, 0.45, 0.15][column])
 			boss.boss_damage_blend = float(column)
 			boss._update_boss_appearance(1.0)
+			assert(boss.damage_effect.sites.size() == 3)
+			boss.damage_effect._process(0.1)
+			var flame_sources := {}
+			for particle in boss.damage_effect.particles:
+				if particle.fire:
+					flame_sources[particle.source] = true
+			assert(flame_sources.size() == [0, 2, 3][column], "Damage must spread across the original flame particles")
 			if row == 2:
 				boss.volley_index = 0
 				assert(boss._charging_wing_muzzles().size() == (0 if column == 0 else 2))
@@ -58,6 +65,7 @@ func _run() -> void:
 	pooled.spawn("interceptor", Vector2(-1000, -1000))
 	assert(pooled.boss_damage_blend == 0.0 and pooled.boss_damage_stage == 0)
 	assert(pooled.damage_effect.smoke_strength == 0.0 and pooled.damage_effect.particles.is_empty())
+	assert(pooled.damage_effect.fire_strength == 0.0 and pooled.damage_effect.damage_amount == 0.0)
 	for plume in pooled.exhaust_plumes:
 		assert(plume.modulate == Color.WHITE)
 	await create_timer(1.3).timeout

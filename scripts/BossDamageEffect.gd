@@ -3,6 +3,7 @@ extends Node2D
 var sites: Array = []
 var smoke_strength := 0.0
 var fire_strength := 0.0
+var damage_amount := 0.0
 var particles: Array[Dictionary] = []
 var emission_time := 0.0
 
@@ -13,10 +14,16 @@ func _ready() -> void:
 func reset() -> void:
 	smoke_strength = 0.0
 	fire_strength = 0.0
+	damage_amount = 0.0
 	emission_time = 0.0
 	particles.clear()
 	set_process(false)
 	queue_redraw()
+
+func source_strength(index: int) -> float:
+	# Fade each breach in over ten armor points: 80–70%, 60–50%, 40–30%.
+	var start := 0.20 + float(index) * 0.20
+	return smoothstep(start, start + 0.10, damage_amount)
 
 func _process(delta: float) -> void:
 	for i in range(particles.size() - 1, -1, -1):
@@ -30,23 +37,23 @@ func _process(delta: float) -> void:
 		if emission_time <= 0.0:
 			emission_time = lerpf(0.42, 0.065, smoke_strength)
 			for i in range(sites.size()):
-				# The second damaged area fades in instead of switching on abruptly.
-				var spread := 1.0 if i == 0 else smoothstep(0.20, 0.80, smoke_strength)
+				var spread := source_strength(i)
 				if spread > 0.001:
-					_emit(sites[i], false, spread)
+					_emit(sites[i], false, spread, i)
 					if fire_strength > 0.0:
-						_emit(sites[i], true, spread)
+						_emit(sites[i], true, spread, i)
 	if not particles.is_empty() or smoke_strength == 0.0:
 		queue_redraw()
 
-func _emit(site: Vector2, fire: bool, spread: float) -> void:
-	if particles.size() >= 64:
+func _emit(site: Vector2, fire: bool, spread: float, source: int) -> void:
+	# Three full trails need room without starving the last breach.
+	if particles.size() >= 128:
 		return
 	particles.append({"pos": to_global(site + Vector2(randf_range(-4, 4), randf_range(-3, 3))),
 		"velocity": Vector2(randf_range(-15, 15), randf_range(-65, -40)),
 		"age": 0.0, "life": randf_range(0.32, 0.55) if fire else randf_range(1.1, 1.7),
 		"size": randf_range(19, 29) * lerpf(0.5, 1.3, fire_strength) if fire else randf_range(23, 34) * lerpf(0.55, 1.2, smoke_strength),
-		"fire": fire, "strength": (fire_strength if fire else smoke_strength) * spread})
+		"fire": fire, "source": source, "strength": (fire_strength if fire else smoke_strength) * spread})
 
 func _draw() -> void:
 	# World-space puffs lag behind lateral movement instead of sticking to the hull.

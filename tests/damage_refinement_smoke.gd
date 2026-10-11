@@ -50,8 +50,8 @@ func _run() -> void:
 		assert(boss.damage_effect.smoke_strength > previous_smoke)
 		assert(boss.damage_effect.fire_strength >= previous_fire)
 		if i == 2:
-			assert(is_equal_approx(boss.damage_effect.smoke_strength, smoothstep(0.0, 1.0, (0.90 - 0.35) / 0.85)), "60% smoke must match the previous 35% state")
-			assert(is_equal_approx(boss.damage_effect.fire_strength, smoothstep(0.0, 1.0, (0.50 - 0.35) / 0.45)), "60% fire must match the previous 35% state")
+			assert(boss.damage_effect.source_strength(0) > 0.99, "First breach is active at 60%")
+			assert(is_zero_approx(boss.damage_effect.source_strength(1)), "Second breach starts fading in below 60%")
 		previous_smoke = boss.damage_effect.smoke_strength
 		previous_fire = boss.damage_effect.fire_strength
 		_label(Vector2(115 + i * 380, 565), "%d%% HEALTH" % roundi(ratio * 100))

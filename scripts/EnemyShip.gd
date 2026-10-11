@@ -527,24 +527,27 @@ func _configure_boss_appearance() -> void:
 	boss_damage_stage = 0
 	boss_damage_blend = 0.0
 	damage_effect.reset()
-	var sites := [Vector2(0.41, 0.17), Vector2(0.57, 0.57)]
+	var sites := [Vector2(0.41, 0.17), Vector2(0.57, 0.57), Vector2(0.59, 0.22)]
 	if enemy_type == "boss2":
-		sites = [Vector2(0.36, 0.15), Vector2(0.69, 0.49)]
+		sites = [Vector2(0.36, 0.15), Vector2(0.69, 0.49), Vector2(0.28, 0.60)]
 	elif enemy_type == "boss3":
-		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37)]
+		sites = [Vector2(0.38, 0.16), Vector2(0.69, 0.37), Vector2(0.28, 0.53)]
 	var dimensions := sprite.texture.get_size() * sprite.scale
-	damage_effect.sites = [(sites[0] - Vector2(0.5, 0.5)) * dimensions, (sites[1] - Vector2(0.5, 0.5)) * dimensions]
+	damage_effect.sites.clear()
+	for site in sites:
+		damage_effect.sites.append((site - Vector2(0.5, 0.5)) * dimensions)
 
 func _update_boss_appearance(delta: float) -> void:
 	if not is_boss:
 		return
 	boss_damage_stage = _damage_stage()
 	boss_damage_blend = move_toward(boss_damage_blend, float(boss_damage_stage), delta * 1.8)
-	# Remap health so 60% has the former 35% appearance, with room to worsen.
-	var ratio := pow(clampf(float(health) / max_health, 0.0, 1.0), 2.0551477366)
+	var damage := 1.0 - clampf(float(health) / max_health, 0.0, 1.0)
 	# Health controls density, size and opacity continuously; ease heavy hits in.
-	var smoke_target := smoothstep(0.0, 1.0, clampf((0.90 - ratio) / 0.85, 0.0, 1.0))
-	var fire_target := smoothstep(0.0, 1.0, clampf((0.50 - ratio) / 0.45, 0.0, 1.0))
+	var smoke_target := smoothstep(0.05, 0.90, damage)
+	# Visible first flames near 70%; all three intensify toward 15% armor.
+	var fire_target := lerpf(0.45, 1.0, smoothstep(0.30, 0.85, damage)) * smoothstep(0.20, 0.30, damage)
+	damage_effect.damage_amount = move_toward(damage_effect.damage_amount, damage, delta * 1.2)
 	damage_effect.smoke_strength = move_toward(damage_effect.smoke_strength, smoke_target, delta * 1.5)
 	damage_effect.fire_strength = move_toward(damage_effect.fire_strength, fire_target, delta * 1.2)
 	damage_effect.set_process(damage_effect.smoke_strength > 0.0 or not damage_effect.particles.is_empty())
