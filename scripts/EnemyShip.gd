@@ -68,6 +68,14 @@ func _ready() -> void:
 	circle.radius = 52.0
 	collision_shape.shape = circle
 	add_child(collision_shape)
+	# Pre-create the maximum exhaust count (4 for layered bosses) so the first
+	# boss spawn doesn't allocate plume nodes + materials mid-fight on Web.
+	# Same visuals; only the allocation timing moves to pool warmup.
+	for i in range(4):
+		var exhaust := ExhaustPlumeScript.new()
+		exhaust.visible = false
+		add_child(exhaust)
+		exhaust_plumes.append(exhaust)
 
 func set_pool(value) -> void:
 	pool = value

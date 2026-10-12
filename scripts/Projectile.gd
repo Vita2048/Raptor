@@ -12,6 +12,24 @@ var impact_sent := false
 var graze_armed := false
 
 static var _shared_add_mat: CanvasItemMaterial
+# Shared enemy-trail ramps: identical colors, allocated once so boss volleys
+# (dozens of bullets/sec) don't allocate + GC on single-threaded Web.
+static var _enemy_trail_grad: Gradient = null
+static var _enemy_core_grad: Gradient = null
+
+static func get_enemy_trail_grad() -> Gradient:
+	if _enemy_trail_grad == null:
+		_enemy_trail_grad = Gradient.new()
+		_enemy_trail_grad.set_color(0, Color(4.0, 0.1, 0.1, 1.0))
+		_enemy_trail_grad.set_color(1, Color(1.5, 0.0, 0.0, 0.0))
+	return _enemy_trail_grad
+
+static func get_enemy_core_grad() -> Gradient:
+	if _enemy_core_grad == null:
+		_enemy_core_grad = Gradient.new()
+		_enemy_core_grad.set_color(0, Color(4.0, 3.0, 3.0, 1.0))
+		_enemy_core_grad.set_color(1, Color(3.0, 1.0, 1.0, 0.0))
+	return _enemy_core_grad
 
 func _ready() -> void:
 	var shape := CollisionShape2D.new()
@@ -124,10 +142,7 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		sprite.scale = Vector2.ONE * 0.14
 		
 		trail.texture = null
-		var trail_grad := Gradient.new()
-		trail_grad.set_color(0, Color(4.0, 0.1, 0.1, 1.0)) # Bright red at head
-		trail_grad.set_color(1, Color(1.5, 0.0, 0.0, 0.0)) # Fading red tail
-		trail.gradient = trail_grad
+		trail.gradient = get_enemy_trail_grad()
 		trail.width = 22.0
 		trail.add_point(Vector2(0.0, 0.0))
 		trail.add_point(Vector2(0.0, 10.0))
@@ -135,10 +150,7 @@ func launch(start_pos: Vector2, direction: Vector2, speed: float, hit_damage: in
 		trail.add_point(Vector2(0.0, 42.0))
 		
 		core_trail.texture = null
-		var core_grad := Gradient.new()
-		core_grad.set_color(0, Color(4.0, 3.0, 3.0, 1.0)) # Pure white/hot pink core
-		core_grad.set_color(1, Color(3.0, 1.0, 1.0, 0.0)) # Fades out quickly
-		core_trail.gradient = core_grad
+		core_trail.gradient = get_enemy_core_grad()
 		core_trail.width = 10.0
 		core_trail.add_point(Vector2(0.0, 0.0))
 		core_trail.add_point(Vector2(0.0, 8.0))

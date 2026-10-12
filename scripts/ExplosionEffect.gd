@@ -8,9 +8,31 @@ var fireball_next: Sprite2D
 var boss_flash_sprite: Sprite2D
 var shockwave_layer: Node2D
 var smoke_layer: Node2D
+var shock_emitter: CPUParticles2D
+var smoke_emitter: CPUParticles2D
 var large_scale := false
 var size_multiplier := 1.0
 var fireball_age := -1.0
+var pool = null
+
+# Shared ramps: identical colors to the previous per-blast Gradients, but
+# allocated once so mid-combat explosions don't allocate + trigger GC on Web.
+static var _shock_gradient: Gradient = null
+static var _smoke_gradient: Gradient = null
+
+static func get_shock_gradient() -> Gradient:
+	if _shock_gradient == null:
+		_shock_gradient = Gradient.new()
+		_shock_gradient.set_color(0, Color(1.0, 0.86, 0.65, 0.5))
+		_shock_gradient.set_color(1, Color(1.0, 1.0, 1.0, 0.0))
+	return _shock_gradient
+
+static func get_smoke_gradient() -> Gradient:
+	if _smoke_gradient == null:
+		_smoke_gradient = Gradient.new()
+		_smoke_gradient.set_color(0, Color(0.65, 0.65, 0.67, 0.72))
+		_smoke_gradient.set_color(1, Color(0.40, 0.40, 0.42, 0.0))
+	return _smoke_gradient
 
 func _ready() -> void:
 	z_index = 90
@@ -32,7 +54,37 @@ func burst(quiet := false) -> void:
 	_emit_shockwave()
 	_emit_smoke_delayed()
 	await get_tree().create_timer(2.65 if large_scale else 2.0).timeout
-	queue_free()
+	if pool != null:
+		pool.release(self)
+	else:
+		queue_free()
+
+func set_pool(value) -> void:
+	pool = value
+
+func on_pool_acquired() -> void:
+	visible = true
+	fireball_age = -1.0
+	if is_instance_valid(flash_sprite):
+		flash_sprite.visible = false
+	if is_instance_valid(fireball_sprite):
+		fireball_sprite.visible = false
+	if is_instance_valid(fireball_next):
+		fireball_next.visible = false
+	if is_instance_valid(boss_flash_sprite):
+		boss_flash_sprite.visible = false
+	if is_instance_valid(shock_emitter):
+		shock_emitter.emitting = false
+	if is_instance_valid(smoke_emitter):
+		smoke_emitter.emitting = false
+
+func on_pool_released() -> void:
+	visible = false
+	fireball_age = -1.0
+	if is_instance_valid(shock_emitter):
+		shock_emitter.emitting = false
+	if is_instance_valid(smoke_emitter):
+		smoke_emitter.emitting = false
 
 func _build_layers() -> void:
 	flash_sprite = Sprite2D.new()
@@ -70,6 +122,33 @@ func _build_layers() -> void:
 	smoke_layer.name = "LingeringSmoke"
 	smoke_layer.z_index = 1
 	add_child(smoke_layer)
+
+	# Persistent batched emitters: created once per blast so mid-combat bursts
+	# only retune + restart instead of allocating nodes + Gradients on Web.
+	shock_emitter = _new_persistent_emitter("WhitePuffShard", get_shock_gradient())
+	shockwave_layer.add_child(shock_emitter)
+	smoke_emitter = _new_persistent_emitter("BlackSmokeTrail", get_smoke_gradient())
+	smoke_layer.add_child(smoke_emitter)
+
+func _new_persistent_emitter(layer_name: String, ramp: Gradient) -> CPUParticles2D:
+	var particles := CPUParticles2D.new()
+	particles.name = layer_name
+	particles.amount = 12
+	particles.lifetime = 0.4
+	particles.one_shot = true
+	particles.explosiveness = 1.0
+	particles.randomness = 0.65
+	particles.local_coords = false
+	particles.emitting = false
+	particles.spread = 28.0 if layer_name == "BlackSmokeTrail" else 180.0
+	particles.color_ramp = ramp
+	if layer_name == "BlackSmokeTrail":
+		particles.gravity = Vector2(0.0, MAP_SCROLL_SPEED * 0.34)
+		particles.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		particles.emission_rect_extents = Vector2(18, 14)
+	else:
+		particles.gravity = Vector2.ZERO
+	return particles
 
 func _play_flash() -> void:
 	flash_sprite.visible = true
@@ -135,7 +214,8 @@ func _update_fireball() -> void:
 func _emit_shockwave() -> void:
 	var count := randi_range(12, 18) if large_scale else randi_range(10, 15)
 	var angle := randf_range(0.0, TAU)
-	var emitter := _make_particle_emitter(
+	_configure_emitter(
+		shock_emitter,
 		"WhitePuffShard",
 		AssetDB.random_particle("white_puff"),
 		count,
@@ -144,18 +224,18 @@ func _emit_shockwave() -> void:
 		(randf_range(380.0, 560.0) if large_scale else randf_range(320.0, 480.0)) * size_multiplier,
 		420.0,
 		0.045,
-		0.065,
-		Color(1.0, 0.86, 0.65, 0.5),
-		Color(1.0, 1.0, 1.0, 0.0)
+		0.065
 	)
-	shockwave_layer.add_child(emitter)
-	emitter.restart()
+	shock_emitter.restart()
 
 func _emit_smoke_delayed() -> void:
 	await get_tree().create_timer(0.1).timeout
+	if not is_instance_valid(self) or not is_instance_valid(smoke_emitter):
+		return
 	var count := randi_range(16, 22) if large_scale else randi_range(15, 20)
 	var drift := Vector2(randf_range(-0.35, 0.35), -1.0).normalized()
-	var emitter := _make_particle_emitter(
+	_configure_emitter(
+		smoke_emitter,
 		"BlackSmokeTrail",
 		AssetDB.random_particle("black_smoke"),
 		count,
@@ -164,13 +244,36 @@ func _emit_smoke_delayed() -> void:
 		(randf_range(45.0, 75.0) if large_scale else randf_range(35.0, 60.0)) * size_multiplier,
 		28.0,
 		0.055,
-		0.16,
-		Color(0.65, 0.65, 0.67, 0.72),
-		Color(0.40, 0.40, 0.42, 0.0),
-		Vector2.ZERO
+		0.16
 	)
-	smoke_layer.add_child(emitter)
-	emitter.restart()
+	smoke_emitter.restart()
+
+func _configure_emitter(emitter: CPUParticles2D, layer_name: String, texture: Texture2D, amount: int, particle_lifetime: float, direction: Vector2, speed: float, damping: float, scale_min: float, scale_max: float) -> void:
+	# Same visuals as before; only retunes the persistent emitter.
+	emitter.texture = texture
+	emitter.amount = amount
+	emitter.lifetime = particle_lifetime
+	emitter.direction = direction
+	emitter.spread = 28.0 if layer_name == "BlackSmokeTrail" else 180.0
+	emitter.initial_velocity_min = speed * 0.72
+	emitter.initial_velocity_max = speed
+	emitter.damping_min = damping
+	emitter.damping_max = damping * 1.25
+	emitter.angular_velocity_min = -18.0 if layer_name == "BlackSmokeTrail" else -180.0
+	emitter.angular_velocity_max = 18.0 if layer_name == "BlackSmokeTrail" else 180.0
+	emitter.scale_amount_min = scale_min * (1.08 if large_scale else 1.0) * size_multiplier
+	emitter.scale_amount_max = scale_max * (1.08 if large_scale else 1.0) * size_multiplier
+	emitter.color_ramp = get_smoke_gradient() if layer_name == "BlackSmokeTrail" else get_shock_gradient()
+	if layer_name == "BlackSmokeTrail":
+		# New smoke cells are smaller than the former ~373px textures.
+		emitter.scale_amount_min *= 373.0 / texture.get_width()
+		emitter.scale_amount_max *= 373.0 / texture.get_width()
+		emitter.gravity = Vector2(0.0, MAP_SCROLL_SPEED * 0.34)
+		emitter.emission_shape = CPUParticles2D.EMISSION_SHAPE_RECTANGLE
+		emitter.emission_rect_extents = Vector2(32, 24) * size_multiplier if large_scale else Vector2(18, 14) * size_multiplier
+	else:
+		emitter.gravity = Vector2.ZERO
+		emitter.emission_shape = CPUParticles2D.EMISSION_SHAPE_POINT
 
 func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int, particle_lifetime: float, direction: Vector2, speed: float, damping: float, scale_min: float, scale_max: float, start_color: Color, end_color: Color, offset := Vector2.ZERO) -> CPUParticles2D:
 	# Two batched CPU emitters avoid dozens of GPU systems/material uploads per blast,
@@ -211,5 +314,10 @@ func _make_particle_emitter(layer_name: String, texture: Texture2D, amount: int,
 	var gradient := Gradient.new()
 	gradient.set_color(0, start_color)
 	gradient.set_color(1, end_color)
-	material.color_ramp = gradient
+	# Reuse shared ramps when colors match the standard blast palette to avoid
+	# per-explosion allocations; fall back to a fresh ramp only for custom colors.
+	if layer_name == "BlackSmokeTrail":
+		material.color_ramp = get_smoke_gradient()
+	else:
+		material.color_ramp = get_shock_gradient()
 	return particles

@@ -2,6 +2,11 @@ extends GPUParticles2D
 
 var pool
 var ring: Sprite2D
+# Reused across hits: avoids a new ParticleProcessMaterial + Gradient +
+# GradientTexture per impact, which stalled single-threaded WebGL.
+var _proc_mat: ParticleProcessMaterial
+var _grad: Gradient
+var _grad_tex: GradientTexture1D
 
 func _ready() -> void:
 	z_index = 125
@@ -13,6 +18,26 @@ func _ready() -> void:
 	local_coords = false
 	emitting = false
 	texture = AssetDB.random_particle("flash")
+
+	_grad = Gradient.new()
+	_grad.set_color(0, Color(4.0, 1.6, 0.55, 1.0))
+	_grad.set_color(1, Color(4.0, 1.6, 0.55, 0.0))
+	_grad_tex = GradientTexture1D.new()
+	_grad_tex.gradient = _grad
+	_proc_mat = ParticleProcessMaterial.new()
+	_proc_mat.direction = Vector3(0, -1, 0)
+	_proc_mat.spread = 34.0
+	_proc_mat.initial_velocity_min = 520.0
+	_proc_mat.initial_velocity_max = 880.0
+	_proc_mat.damping_min = 520.0
+	_proc_mat.damping_max = 760.0
+	_proc_mat.scale_min = 0.01
+	_proc_mat.scale_max = 0.025
+	_proc_mat.angular_velocity_min = -420.0
+	_proc_mat.angular_velocity_max = 420.0
+	_proc_mat.gravity = Vector3.ZERO
+	_proc_mat.color_ramp = _grad_tex
+	process_material = _proc_mat
 	
 	ring = Sprite2D.new()
 	var pm := CanvasItemMaterial.new()
@@ -44,26 +69,11 @@ func play_at(pos: Vector2, bullet_velocity: Vector2, tint: Color) -> void:
 	if direction.length_squared() == 0.0:
 		direction = Vector2.UP
 
-	var material := ParticleProcessMaterial.new()
-	material.direction = Vector3(direction.x, direction.y, 0.0)
-	material.spread = 34.0
-	material.initial_velocity_min = 520.0
-	material.initial_velocity_max = 880.0
-	material.damping_min = 520.0
-	material.damping_max = 760.0
-	material.scale_min = 0.01
-	material.scale_max = 0.025
-	material.angular_velocity_min = -420.0
-	material.angular_velocity_max = 420.0
-	material.gravity = Vector3.ZERO
-
-	var gradient := Gradient.new()
-	gradient.set_color(0, tint)
-	gradient.set_color(1, Color(tint.r, tint.g, tint.b, 0.0))
-	var gradient_texture := GradientTexture1D.new()
-	gradient_texture.gradient = gradient
-	material.color_ramp = gradient_texture
-	process_material = material
+	# Retune the persistent material/gradient in place: same visuals, no allocs.
+	_proc_mat.direction = Vector3(direction.x, direction.y, 0.0)
+	_grad.set_color(0, tint)
+	_grad.set_color(1, Color(tint.r, tint.g, tint.b, 0.0))
+	process_material = _proc_mat
 	restart()
 	await get_tree().create_timer(0.25).timeout
 	if pool != null:
