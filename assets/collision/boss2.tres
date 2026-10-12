@@ -1,6 +1,6 @@
-[gd_resource type="Resource" format=3]
+[gd_resource type="Resource" format=3 uid="uid://dk2f872nloqr0"]
 
-[ext_resource type="Script" path="res://scripts/BossCollisionData.gd" id="1_gjidc"]
+[ext_resource type="Script" uid="uid://dpq337poa4007" path="res://scripts/BossCollisionData.gd" id="1_gjidc"]
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_4lysr"]
 points = PackedVector2Array(-566, -17, -516, -13, -517, -13)

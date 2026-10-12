@@ -127,7 +127,6 @@ func _build_ui() -> void:
 	box.add_child(reset_button)
 	reset_button.pressed.connect(_spawn_boss)
 	status_label = _label(box, "", 20)
-	_label(box, "Damage changes ease in gradually.\nThe ship returns after its explosion.\n\nNo weapons or enemies in this scene.", 19)
 	var title := Label.new()
 	title.text = "HULL DAMAGE / EXPLOSION PREVIEW"
 	title.position = Vector2(70, 45)
